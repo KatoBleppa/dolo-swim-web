@@ -1,0 +1,29 @@
+.dashboard-container {
+  max-width: 600px;
+  margin: 3rem auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  text-align: center;
+}
+.dashboard-links {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+.dashboard-link {
+  font-size: 1.3rem;
+  padding: 1rem 0;
+  border-radius: 8px;
+  background: #f0f4ff;
+  color: #213547;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background 0.2s, color 0.2s;
+}
+.dashboard-link:hover {
+  background: #646cff;
+  color: #fff;
+}
