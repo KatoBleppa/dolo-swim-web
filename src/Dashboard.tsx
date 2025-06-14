@@ -7,6 +7,7 @@ const Dashboard = () => (
     <div className="dashboard-links">
       <Link className="dashboard-link" to="/athletes">Athletes</Link>
       <Link className="dashboard-link" to="/trainings">Trainings</Link>
+      <Link className="dashboard-link" to="/trainingscal">Trainings Calendar</Link>
       <Link className="dashboard-link" to="/results">Results</Link>
       <Link className="dashboard-link" to="/tools">Tools</Link>
     </div>

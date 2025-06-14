@@ -132,18 +132,24 @@ const TrainingsPage = () => {
     setCreating(true);
     setForm({
       date: '',
+      starttime: '',
+      endtime: '',
       title: '',
       groups: '',
       type: 'Swim',
       volume: '',
-      description: ''
+      description: '',
+      location: '',
+      poolname: '',
+      poollength: '',
     });
     setFormError(null);
   };
 
   const handleSaveCreate = async () => {
     setFormError(null);
-    const { error } = await supabase.from('sessions').insert([form]);
+  const { session_id, ...insertFields } = form;
+  const { error } = await supabase.from('sessions').insert([insertFields]);
     if (error) {
       setFormError(error.message);
     } else {
@@ -277,34 +283,80 @@ const TrainingsPage = () => {
                     handleSaveCreate();
                   }}
                 >
-                  <label>
-                    Date:<br />
-                    <input type="date" name="date" value={form.date || ''} onChange={handleFormChange} required />
-                  </label><br />
-                  <label>
-                    Title:<br />
-                    <input type="text" name="title" value={form.title || ''} onChange={handleFormChange} required />
-                  </label><br />
-                  <label>
-                    Groups:<br />
-                    <input type="text" name="groups" value={form.groups || ''} onChange={handleFormChange} />
-                  </label><br />
-                  <label>
-                    Type:<br />
-                    <select name="type" value={form.type || 'Swim'} onChange={handleFormChange}>
-                      <option value="Swim">Swim</option>
-                      <option value="Gym">Gym</option>
-                    </select>
-                  </label><br />
-                  <label>
-                    Volume:<br />
-                    <input type="text" name="volume" value={form.volume || ''} onChange={handleFormChange} />
-                  </label><br />
-                  <label>
-                    Description:<br />
-                    <textarea name="description" value={form.description || ''} onChange={handleFormChange} />
-                  </label><br />
-                  <button type="submit" style={{ marginTop: 8 }}>Create</button>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <tbody>
+                      <tr>
+                        <td style={{ padding: 6, fontWeight: 'bold' }}>Date:</td>
+                        <td>
+                          <input type="date" name="date" value={form.date || ''} onChange={handleFormChange} required />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: 6, fontWeight: 'bold' }}>Start time:</td>
+                        <td>
+                          <input type="starttime" name="starttime" value={form.starttime || ''} onChange={handleFormChange} required />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: 6, fontWeight: 'bold' }}>End time:</td>
+                        <td>
+                          <input type="endtime" name="endtime" value={form.endtime || ''} onChange={handleFormChange} required />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: 6, fontWeight: 'bold' }}>Title:</td>
+                        <td>
+                          <input type="text" name="title" value={form.title || ''} onChange={handleFormChange} required />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: 6, fontWeight: 'bold' }}>Groups:</td>
+                        <td>
+                          <input type="text" name="groups" value={form.groups || ''} onChange={handleFormChange} />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: 6, fontWeight: 'bold' }}>Type:</td>
+                        <td>
+                          <select name="type" value={form.type || 'Swim'} onChange={handleFormChange}>
+                            <option value="Swim">Swim</option>
+                            <option value="Gym">Gym</option>
+                          </select>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: 6, fontWeight: 'bold' }}>Volume:</td>
+                        <td>
+                          <input type="text" name="volume" value={form.volume || ''} onChange={handleFormChange} />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: 6, fontWeight: 'bold' }}>Description:</td>
+                        <td>
+                          <textarea name="description" value={form.description || ''} onChange={handleFormChange} />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: 6, fontWeight: 'bold' }}>Location:</td>
+                        <td>
+                          <textarea name="location" value={form.location || ''} onChange={handleFormChange} />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: 6, fontWeight: 'bold' }}>Pool name:</td>
+                        <td>
+                          <textarea name="poolname" value={form.poolname || ''} onChange={handleFormChange} />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: 6, fontWeight: 'bold' }}>Pool length:</td>
+                        <td>
+                          <textarea name="poollength" value={form.poollength || ''} onChange={handleFormChange} />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <button type="submit" style={{ marginTop: 12 }}>Create</button>
                 </form>
               </>
             ) : editMode ? (
@@ -316,46 +368,65 @@ const TrainingsPage = () => {
                     handleUpdate();
                   }}
                 >
-                  <label>
-                    Date:<br />
-                    <input type="date" name="date" value={form.date || ''} onChange={handleFormChange} required />
-                  </label><br />
-                  <label>
-                    Title:<br />
-                    <input type="text" name="title" value={form.title || ''} onChange={handleFormChange} required />
-                  </label><br />
-                  <label>
-                    Groups:<br />
-                    <input type="text" name="groups" value={form.groups || ''} onChange={handleFormChange} />
-                  </label><br />
-                  <label>
-                    Type:<br />
-                    <select name="type" value={form.type || 'Swim'} onChange={handleFormChange}>
-                      <option value="Swim">Swim</option>
-                      <option value="Gym">Gym</option>
-                    </select>
-                  </label><br />
-                  <label>
-                    Volume:<br />
-                    <input type="text" name="volume" value={form.volume || ''} onChange={handleFormChange} />
-                  </label><br />
-                  <label>
-                    Description:<br />
-                    <textarea name="description" value={form.description || ''} onChange={handleFormChange} />
-                  </label><br />
-                  <button type="submit" style={{ marginTop: 8 }}>Save</button>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <tbody>
+                      <tr>
+                        <td style={{ padding: 6, fontWeight: 'bold' }}>Date:</td>
+                        <td>
+                          <input type="date" name="date" value={form.date || ''} onChange={handleFormChange} required />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: 6, fontWeight: 'bold' }}>Title:</td>
+                        <td>
+                          <input type="text" name="title" value={form.title || ''} onChange={handleFormChange} required />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: 6, fontWeight: 'bold' }}>Groups:</td>
+                        <td>
+                          <input type="text" name="groups" value={form.groups || ''} onChange={handleFormChange} />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: 6, fontWeight: 'bold' }}>Type:</td>
+                        <td>
+                          <select name="type" value={form.type || 'Swim'} onChange={handleFormChange}>
+                            <option value="Swim">Swim</option>
+                            <option value="Gym">Gym</option>
+                          </select>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: 6, fontWeight: 'bold' }}>Volume:</td>
+                        <td>
+                          <input type="text" name="volume" value={form.volume || ''} onChange={handleFormChange} />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: 6, fontWeight: 'bold' }}>Description:</td>
+                        <td>
+                          <textarea name="description" value={form.description || ''} onChange={handleFormChange} />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <button type="submit" style={{ marginTop: 12 }}>Save</button>
                 </form>
               </>
             ) : (
               <>
                 <h3>Session Details</h3>
-                <ul style={{ listStyle: 'none', padding: 0 }}>
-                  {Object.entries(selectedTraining || {}).map(([key, value]) => (
-                    <li key={key}>
-                      <strong>{key}:</strong> {String(value)}
-                    </li>
-                  ))}
-                </ul>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <tbody>
+                    {Object.entries(selectedTraining || {}).map(([key, value]) => (
+                      <tr key={key}>
+                        <td style={{ padding: 6, fontWeight: 'bold', width: '40%' }}>{key}:</td>
+                        <td style={{ padding: 6 }}>{String(value)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
                 <div style={{ marginTop: 16 }}>
                   <button onClick={handleEdit} style={{ marginRight: 8 }}>Edit</button>
                   <button onClick={handleDelete} style={{ marginRight: 8, color: 'red' }}>Delete</button>
