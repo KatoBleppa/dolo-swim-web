@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { FaSwimmer, FaDumbbell } from "react-icons/fa"; // Import gym icon
 import { supabase } from "./supabaseClient";
+import AttendanceForm from "./AttendanceForm";
+
+console.log('TrainingsCalendar file loaded');
 
 interface Session {
-  id: number;
+  session_id: number;
   date: string; // ISO date string, e.g. "2025-06-14"
   type: "Gym" | "Swim";
   description?: string;
@@ -83,7 +86,10 @@ const TrainingsCalendar: React.FC = () => {
   const [newPoolName, setNewPoolName] = useState("");
   const [newPoolLength, setNewPoolLength] = useState("");
   const [sessionDetailsOpen, setSessionDetailsOpen] = useState(false);
-  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [selectedSession, setSelectedSession] = useState<Session | null>(null)
+  const [editMode, setEditMode] = useState(false);
+  const [editSessionId, setEditSessionId] = useState<number | null>(null);
+  const [attendanceOpen, setAttendanceOpen] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -121,7 +127,7 @@ const TrainingsCalendar: React.FC = () => {
     });
   };
 
-    const openModal = (dateStr: string) => {
+  const openModal = (dateStr: string) => {
   setSelectedDate(dateStr);
   setNewStartTime("");
   setNewEndTime("");
@@ -136,11 +142,13 @@ const TrainingsCalendar: React.FC = () => {
   setModalOpen(true);
   };
 
-  const closeModal = () => {
-    setModalOpen(false);
-    setSelectedDate(null);
-    setNewDesc("");
-  };
+const closeModal = () => {
+  setModalOpen(false);
+  setSelectedDate(null);
+  setNewDesc("");
+  setEditMode(false);
+  setEditSessionId(null);
+};
 
     // Add this handler
   const openSessionDetails = (session: Session) => {
@@ -153,28 +161,74 @@ const TrainingsCalendar: React.FC = () => {
     setSelectedSession(null);
   };
 
-const handleInsertSession = async (e: React.FormEvent) => {
+// Open modal for editing
+const openEditModal = (session: Session) => {
+  setSelectedDate(session.date.split("T")[0]);
+  setNewStartTime(session.starttime || "");
+  setNewEndTime(session.endtime || "");
+  setNewTitle(session.title || "");
+  setNewGroups(session.groups || "");
+  setNewType(session.type);
+  setNewVolume(session.volume ? String(session.volume) : "");
+  setNewDesc(session.description || "");
+  setNewLocation(session.location || "");
+  setNewPoolName(session.poolname || "");
+  setNewPoolLength(session.poollength ? String(session.poollength) : "");
+  setEditSessionId(session.session_id);
+  setEditMode(true);
+  setModalOpen(true);
+  setSessionDetailsOpen(false);
+};
+
+// Reset edit state on close
+
+
+// Insert or update session
+const handleInsertOrUpdateSession = async (e: React.FormEvent) => {
   e.preventDefault();
   if (!selectedDate) return;
-  const insertObj = {
+  const sessionObj = {
     date: selectedDate,
     starttime: newStartTime,
     endtime: newEndTime,
     title: newTitle,
     groups: newGroups,
     type: newType,
-    volume: newVolume,
+    volume: newVolume ? Number(newVolume) : null,
     description: newDesc,
     location: newLocation,
     poolname: newPoolName,
-    poollength: newPoolLength,
+    poollength: newPoolLength ? Number(newPoolLength) : null,
   };
-  const { error } = await supabase.from("sessions").insert([insertObj]);
+  let error;
+  if (editMode && editSessionId) {
+    // Update without sending the session_id field
+    ({ error } = await supabase.from("sessions").update(sessionObj).eq("session_id", editSessionId));
+  } else {
+    // Insert
+    ({ error } = await supabase.from("sessions").insert([sessionObj]));
+  }
   if (error) {
-    alert("Error inserting session: " + error.message);
+    alert("Error saving session: " + error.message);
     return;
   }
   closeModal();
+  setLoading(true);
+  fetchSessionsForMonth(currentYear, currentMonth)
+    .then(setSessions)
+    .finally(() => setLoading(false));
+};
+
+// Delete session
+const handleDeleteSession = async () => {
+  if (!selectedSession) return;
+  if (!window.confirm("Delete this session?")) return;
+  const { error } = await supabase.from("sessions").delete().eq("session_id", selectedSession.session_id);
+  if (error) {
+    alert("Error deleting session: " + error.message);
+    return;
+  }
+  closeSessionDetails();
   setLoading(true);
   fetchSessionsForMonth(currentYear, currentMonth)
     .then(setSessions)
@@ -225,7 +279,7 @@ const handleInsertSession = async (e: React.FormEvent) => {
                       {daySessions.map((session) =>
                         session.type === "Gym" ? (
                           <div
-                            key={session.id}
+                            key={session.session_id}
                             style={{ color: "#2e7d32", fontSize: 16, cursor: "pointer", display: "inline-block", marginRight: 4 }}
                             onClick={() => openSessionDetails(session)}
                             title="View gym session details"
@@ -234,7 +288,7 @@ const handleInsertSession = async (e: React.FormEvent) => {
                           </div>
                         ) : (
                           <div
-                            key={session.id}
+                            key={session.session_id}
                             style={{ color: "#1976d2", fontSize: 16, cursor: "pointer", display: "inline-block", marginRight: 4 }}
                             onClick={() => openSessionDetails(session)}
                             title="View swim session details"
@@ -276,8 +330,8 @@ const handleInsertSession = async (e: React.FormEvent) => {
       }}
       onClick={e => e.stopPropagation()}
     >
-      <h3>Add Session for {selectedDate}</h3>
-      <form onSubmit={handleInsertSession}>
+      <h3>{editMode ? "Edit Session" : `Add Session for ${selectedDate}`}</h3>
+      <form onSubmit={handleInsertOrUpdateSession}>
         <div style={{ marginBottom: 12 }}>
           <label>
             Start Time:{" "}
@@ -345,11 +399,13 @@ const handleInsertSession = async (e: React.FormEvent) => {
         <div style={{ marginBottom: 12 }}>
           <label>
             Description:{" "}
-            <input
-              type="text"
+            <textarea
               value={newDesc}
               onChange={e => setNewDesc(e.target.value)}
-              style={{ width: "100%" }}
+              style={{ width: "100%", height: 80, fontFamily: 'monospace', whiteSpace: 'pre', tabSize: 4 }}
+              rows={5}
+              wrap="off"
+              spellCheck={false}
             />
           </label>
         </div>
@@ -388,14 +444,14 @@ const handleInsertSession = async (e: React.FormEvent) => {
         </div>
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
           <button type="button" onClick={closeModal}>Cancel</button>
-          <button type="submit">Add</button>
+          <button type="submit">{editMode ? "Save" : "Add"}</button>
         </div>
       </form>
     </div>
   </div>
 )}
 
-      {/* Session Details Modal */}
+{/* Session Details Modal */}
       {sessionDetailsOpen && selectedSession && (
         <div
           style={{
@@ -415,7 +471,7 @@ const handleInsertSession = async (e: React.FormEvent) => {
             minWidth: 320,
             boxShadow: "0 2px 16px rgba(0,0,0,0.2)",
             position: "relative",
-            textAlign: "left", // <-- Add this line
+            textAlign: "left",
           }}
           onClick={e => e.stopPropagation()}
         >
@@ -456,10 +512,16 @@ const handleInsertSession = async (e: React.FormEvent) => {
             <div style={{ marginBottom: 8 }}>
               <strong>Pool Length:</strong> {selectedSession.poollength || "-"}
             </div>
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <button onClick={closeSessionDetails}>Close</button>
-            </div>
-          </div>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+        <button onClick={closeSessionDetails}>Close</button>
+        <button onClick={() => openEditModal(selectedSession)}>Edit</button>
+        <button onClick={handleDeleteSession} style={{ color: "red" }}>Delete</button>
+        <button onClick={() => setAttendanceOpen(true)}>Attendance</button>
+      </div>
+          {attendanceOpen && selectedSession && (
+            <AttendanceForm sessionId={selectedSession.session_id} sessionGroups={selectedSession.groups} onClose={() => setAttendanceOpen(false)} />
+          )}
+        </div>
         </div>
       )}
 

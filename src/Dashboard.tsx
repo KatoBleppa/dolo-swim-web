@@ -10,6 +10,7 @@ const Dashboard = () => (
       <Link className="dashboard-link" to="/trainingscal">Trainings Calendar</Link>
       <Link className="dashboard-link" to="/results">Results</Link>
       <Link className="dashboard-link" to="/tools">Tools</Link>
+      <Link className="dashboard-link" to="/attendance">Test</Link>
     </div>
   </div>
 );
