@@ -108,13 +108,12 @@ const TrainingsCalendar: React.FC = () => {
   const sessionsByDate = groupSessionsByDate(sessions);
 
   const handlePrevMonth = () => {
-    setCurrentMonth((prev) => {
-      if (prev === 0) {
-        setCurrentYear((y) => y - 1);
-        return 11;
-      }
-      return prev - 1;
-    });
+    if (currentMonth === 0) {
+      setCurrentYear(currentYear - 1);
+      setCurrentMonth(11);
+    } else {
+      setCurrentMonth(currentMonth - 1);
+    }
   };
 
   const handleNextMonth = () => {
@@ -129,16 +128,16 @@ const TrainingsCalendar: React.FC = () => {
 
   const openModal = (dateStr: string) => {
   setSelectedDate(dateStr);
-  setNewStartTime("");
-  setNewEndTime("");
+  setNewStartTime("18:00:00");
+  setNewEndTime("20:00:00");
   setNewTitle("");
-  setNewGroups("");
+  setNewGroups("ASS");
   setNewType("Swim");
   setNewVolume("");
   setNewDesc("");
-  setNewLocation("");
-  setNewPoolName("");
-  setNewPoolLength("");
+  setNewLocation("Bolzano");
+  setNewPoolName("Lido");
+  setNewPoolLength("50");
   setModalOpen(true);
   };
 

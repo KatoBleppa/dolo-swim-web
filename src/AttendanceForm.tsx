@@ -5,7 +5,7 @@ interface Athlete {
   fincode: number;
   name: string;
   photo?: string;
-  team?: string;
+  groups?: string;
   status?: string;
 }
 
@@ -45,18 +45,18 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({ sessionId, sessionGroup
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch athletes for the team(s)
+        // Fetch athletes for the group(s)
         let { data: athletes, error: athletesError } = await supabase
           .from("athletes")
-          .select("fincode, name, photo, team");
+          .select("fincode, name, photo, groups");
         if (athletesError) throw athletesError;
         let filtered = athletes || [];
         if (sessionGroups && sessionGroups.trim() !== "") {
           const groupList = sessionGroups.split(',').map(g => g.trim().toUpperCase());
           filtered = filtered.filter((athlete: Athlete) => {
-            if (!athlete.team) return false;
-            const athleteTeams = athlete.team.split(',').map((t: string) => t.trim().toUpperCase());
-            return groupList.some(g => athleteTeams.includes(g));
+            if (!athlete.groups) return false;
+            const athleteGroups = athlete.groups.split(',').map((t: string) => t.trim().toUpperCase());
+            return groupList.some(g => athleteGroups.includes(g));
           });
         }
         filtered.sort((a, b) => a.name.localeCompare(b.name));
@@ -132,13 +132,13 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({ sessionId, sessionGroup
 
   return (
     <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1200 }}>
-      <div style={{ background: "#fff", padding: 24, borderRadius: 8, minWidth: 340, boxShadow: "0 2px 16px rgba(0,0,0,0.2)", position: "relative", maxWidth: 500 }}>
+      <div style={{ background: "#fff", padding: 24, borderRadius: 8, minWidth: 340, maxHeight: 900, height: 800, boxShadow: "0 2px 16px rgba(0,0,0,0.2)", position: "relative", maxWidth: 500 }}>
         <h3>Attendance</h3>
         {loading ? (
           <div>Loading athletes...</div>
         ) : (
           <div>
-            <ul style={{ maxHeight: 300, overflowY: "auto", padding: 0, listStyle: "none" }}>
+            <ul style={{ maxHeight: 600, overflowY: "auto", padding: 0, listStyle: "none" }}>
               {athletes.map((athlete) => {
                 let rowStyle: React.CSSProperties = {
                   display: "flex",

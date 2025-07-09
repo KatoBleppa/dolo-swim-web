@@ -27,3 +27,9 @@
   background: #646cff;
   color: #fff;
 }
+
+/* Purple aura effect for dashboard icons, matching .logo:hover */
+.dashboard-icon:hover {
+  filter: drop-shadow(0 0 2em rgb(25, 13, 196));
+}
+
