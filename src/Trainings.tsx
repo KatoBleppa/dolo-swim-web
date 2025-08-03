@@ -55,7 +55,7 @@ const TrainingsPage = () => {
   const handleEdit = () => {
     const trainingId = getTrainingId(selectedTraining);
     if (!trainingId) {
-      setFormError("ID non trovato nel record selezionato.");
+      setFormError('ID non trovato nel record selezionato.');
       return;
     }
     setEditMode(true);
@@ -63,11 +63,15 @@ const TrainingsPage = () => {
     setFormError(null);
   };
 
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleFormChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     setForm((prev: any) => ({
       ...prev,
       [e.target.name]: e.target.value,
-      session_id: prev.session_id // always preserve session_id
+      session_id: prev.session_id, // always preserve session_id
     }));
   };
 
@@ -82,7 +86,10 @@ const TrainingsPage = () => {
     Object.keys(updateFields).forEach(
       key => updateFields[key] === undefined && delete updateFields[key]
     );
-    const { error } = await supabase.from('sessions').update(updateFields).eq('session_id', trainingId);
+    const { error } = await supabase
+      .from('sessions')
+      .update(updateFields)
+      .eq('session_id', trainingId);
     if (error) {
       setFormError(error.message);
     } else {
@@ -94,7 +101,9 @@ const TrainingsPage = () => {
         if (filter !== 'All') query = query.eq('type', filter);
         const from = (page - 1) * PAGE_SIZE;
         const to = from + PAGE_SIZE - 1;
-        const { data, count } = await query.order('date', { ascending: false }).range(from, to);
+        const { data, count } = await query
+          .order('date', { ascending: false })
+          .range(from, to);
         setTrainings(data || []);
         setTotalCount(count || 0);
       };
@@ -108,8 +117,12 @@ const TrainingsPage = () => {
       setFormError('Session id is missing.');
       return;
     }
-    if (!window.confirm('Are you sure you want to delete this session?')) return;
-    const { error } = await supabase.from('sessions').delete().eq('session_id', trainingId);
+    if (!window.confirm('Are you sure you want to delete this session?'))
+      return;
+    const { error } = await supabase
+      .from('sessions')
+      .delete()
+      .eq('session_id', trainingId);
     if (error) {
       setFormError(error.message);
     } else {
@@ -120,7 +133,9 @@ const TrainingsPage = () => {
         if (filter !== 'All') query = query.eq('type', filter);
         const from = (page - 1) * PAGE_SIZE;
         const to = from + PAGE_SIZE - 1;
-        const { data, count } = await query.order('date', { ascending: false }).range(from, to);
+        const { data, count } = await query
+          .order('date', { ascending: false })
+          .range(from, to);
         setTrainings(data || []);
         setTotalCount(count || 0);
       };
@@ -148,8 +163,8 @@ const TrainingsPage = () => {
 
   const handleSaveCreate = async () => {
     setFormError(null);
-  const { session_id, ...insertFields } = form;
-  const { error } = await supabase.from('sessions').insert([insertFields]);
+    const { session_id, ...insertFields } = form;
+    const { error } = await supabase.from('sessions').insert([insertFields]);
     if (error) {
       setFormError(error.message);
     } else {
@@ -162,7 +177,9 @@ const TrainingsPage = () => {
         if (filter !== 'All') query = query.eq('type', filter);
         const from = 0;
         const to = PAGE_SIZE - 1;
-        const { data, count } = await query.order('date', { ascending: false }).range(from, to);
+        const { data, count } = await query
+          .order('date', { ascending: false })
+          .range(from, to);
         setTrainings(data || []);
         setTotalCount(count || 0);
       };
@@ -171,81 +188,253 @@ const TrainingsPage = () => {
   };
 
   return (
-    <div style={{ maxWidth: 900, margin: '2rem auto', padding: '2rem', background: '#fff', borderRadius: 8 }}>
+    <div
+      style={{
+        maxWidth: 900,
+        margin: '2rem auto',
+        padding: '2rem',
+        background: '#fff',
+        borderRadius: 8,
+      }}
+    >
       <h2>Trainings</h2>
-      <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between' }}>
-        <label>
-          Filter by type:&nbsp;
-          <select value={filter} onChange={e => { setFilter(e.target.value as 'All' | 'Swim' | 'Gym'); setPage(1); }}>
+      <div
+        style={{
+          marginBottom: '1rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <div>
+          <label
+            htmlFor="type-filter"
+            style={{ marginRight: '10px', fontWeight: 'bold' }}
+          >
+            Filter by type:
+          </label>
+          <select
+            id="type-filter"
+            value={filter}
+            onChange={e => {
+              setFilter(e.target.value as 'All' | 'Swim' | 'Gym');
+              setPage(1);
+            }}
+            style={{
+              padding: '8px',
+              borderRadius: '4px',
+              border: '1px solid #ccc',
+            }}
+          >
             <option value="All">All</option>
             <option value="Swim">Swim</option>
             <option value="Gym">Gym</option>
           </select>
-        </label>
-        <button onClick={handleCreate} style={{ padding: '6px 12px', borderRadius: 4 }}>+ New Training</button>
+        </div>
+        <button
+          onClick={handleCreate}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#28a745',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+          }}
+        >
+          + New Training
+        </button>
       </div>
       {loading && <p>Loading...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {!loading && !error && (
         <>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr>
-                <th style={{ border: '1px solid #ccc', padding: '8px' }}>Date</th>
-                <th style={{ border: '1px solid #ccc', padding: '8px' }}>Title</th>
-                <th style={{ border: '1px solid #ccc', padding: '8px' }}>Groups</th>
-                <th style={{ border: '1px solid #ccc', padding: '8px' }}>Type</th>
-                <th style={{ border: '1px solid #ccc', padding: '8px' }}>Volume</th>
-                <th style={{ border: '1px solid #ccc', padding: '8px' }}>Details</th>
-              </tr>
-            </thead>
-            <tbody>
-              {trainings.map((training) => (
-                <tr key={getTrainingId(training) ?? training.date}>
-                  <td style={{ border: '1px solid #ccc', padding: '8px' }}>{training.date}</td>
-                  <td style={{ border: '1px solid #ccc', padding: '8px' }}>{training.title}</td>
-                  <td style={{ border: '1px solid #ccc', padding: '8px' }}>{training.groups}</td>
-                  <td style={{ border: '1px solid #ccc', padding: '8px' }}>{training.type}</td>
-                  <td style={{ border: '1px solid #ccc', padding: '8px' }}>{training.volume}</td>
-                  <td style={{ border: '1px solid #ccc', padding: '8px' }}>
-                    <button onClick={() => { setSelectedTraining(training); setEditMode(false); }}>View Details</button>
-                  </td>
+          <div className="table-container" style={{ overflowX: 'auto' }}>
+            <table
+              style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+                border: '1px solid #ddd',
+              }}
+            >
+              <thead>
+                <tr style={{ backgroundColor: '#f5f5f5' }}>
+                  <th
+                    style={{
+                      padding: '12px',
+                      border: '1px solid #ddd',
+                      textAlign: 'left',
+                    }}
+                  >
+                    Date
+                  </th>
+                  <th
+                    style={{
+                      padding: '12px',
+                      border: '1px solid #ddd',
+                      textAlign: 'left',
+                    }}
+                  >
+                    Title
+                  </th>
+                  <th
+                    style={{
+                      padding: '12px',
+                      border: '1px solid #ddd',
+                      textAlign: 'left',
+                    }}
+                  >
+                    Groups
+                  </th>
+                  <th
+                    style={{
+                      padding: '12px',
+                      border: '1px solid #ddd',
+                      textAlign: 'left',
+                    }}
+                  >
+                    Type
+                  </th>
+                  <th
+                    style={{
+                      padding: '12px',
+                      border: '1px solid #ddd',
+                      textAlign: 'left',
+                    }}
+                  >
+                    Volume
+                  </th>
+                  <th
+                    style={{
+                      padding: '12px',
+                      border: '1px solid #ddd',
+                      textAlign: 'left',
+                    }}
+                  >
+                    Details
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: 8 }}>
+              </thead>
+              <tbody>
+                {trainings.map((training, index) => (
+                  <tr
+                    key={getTrainingId(training) ?? training.date}
+                    style={{
+                      backgroundColor: index % 2 === 0 ? '#f9f9f9' : 'white',
+                    }}
+                  >
+                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>
+                      {training.date}
+                    </td>
+                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>
+                      {training.title}
+                    </td>
+                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>
+                      {training.groups}
+                    </td>
+                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>
+                      {training.type}
+                    </td>
+                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>
+                      {training.volume}
+                    </td>
+                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>
+                      <button
+                        onClick={() => {
+                          setSelectedTraining(training);
+                          setEditMode(false);
+                        }}
+                        style={{
+                          padding: '6px 12px',
+                          backgroundColor: '#007bff',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div
+            style={{
+              marginTop: '1rem',
+              display: 'flex',
+              justifyContent: 'center',
+              gap: 8,
+              alignItems: 'center',
+            }}
+          >
             <button
               onClick={() => setPage(page - 1)}
               disabled={page === 1}
-              style={{ padding: '6px 12px', borderRadius: 4 }}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: page === 1 ? '#e9ecef' : '#007bff',
+                color: page === 1 ? '#6c757d' : 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: page === 1 ? 'not-allowed' : 'pointer',
+              }}
             >
               Previous
             </button>
-            <span>Page {page} of {totalPages || 1}</span>
+            <span style={{ padding: '0 16px', fontWeight: 'bold' }}>
+              Page {page} of {totalPages || 1}
+            </span>
             <button
               onClick={() => setPage(page + 1)}
               disabled={page === totalPages || totalPages === 0}
-              style={{ padding: '6px 12px', borderRadius: 4 }}
+              style={{
+                padding: '8px 16px',
+                backgroundColor:
+                  page === totalPages || totalPages === 0
+                    ? '#e9ecef'
+                    : '#007bff',
+                color:
+                  page === totalPages || totalPages === 0 ? '#6c757d' : 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor:
+                  page === totalPages || totalPages === 0
+                    ? 'not-allowed'
+                    : 'pointer',
+              }}
             >
               Next
             </button>
           </div>
         </>
       )}
-      {!loading && !error && trainings.length === 0 && <p>No trainings found.</p>}
+      {!loading && !error && trainings.length === 0 && (
+        <p>No trainings found.</p>
+      )}
 
       {/* Modal for details, edit, and create */}
       {(selectedTraining || creating) && (
         <div
           style={{
             position: 'fixed',
-            top: 0, left: 0, right: 0, bottom: 0,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
             background: 'rgba(0,0,0,0.4)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 1000
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
           }}
-          onClick={() => { setSelectedTraining(null); setEditMode(false); setCreating(false); }}
+          onClick={() => {
+            setSelectedTraining(null);
+            setEditMode(false);
+            setCreating(false);
+          }}
         >
           <div
             style={{
@@ -254,24 +443,29 @@ const TrainingsPage = () => {
               borderRadius: 8,
               minWidth: 320,
               maxWidth: 500,
-              position: 'relative'
+              position: 'relative',
             }}
             onClick={e => e.stopPropagation()}
           >
             <button
-              onClick={() => { setSelectedTraining(null); setEditMode(false); setCreating(false); }}
+              onClick={() => {
+                setSelectedTraining(null);
+                setEditMode(false);
+                setCreating(false);
+              }}
               style={{
                 position: 'absolute',
                 top: 8,
                 right: 8,
-                background: 'transparent',
+                background: 'none',
                 border: 'none',
-                fontSize: 20,
-                cursor: 'pointer'
+                fontSize: 18,
+                cursor: 'pointer',
+                color: '#666',
               }}
               aria-label="Close"
             >
-              &times;
+              ✕
             </button>
             {formError && <p style={{ color: 'red' }}>{formError}</p>}
             {creating ? (
@@ -284,28 +478,73 @@ const TrainingsPage = () => {
                   }}
                 >
                   <div style={{ marginBottom: 8 }}>
-                    <strong>Date:</strong> <input type="date" name="date" value={form.date || ''} onChange={handleFormChange} required />
+                    <strong>Date:</strong>{' '}
+                    <input
+                      type="date"
+                      name="date"
+                      value={form.date || ''}
+                      onChange={handleFormChange}
+                      required
+                    />
                   </div>
                   <div style={{ marginBottom: 8 }}>
-                    <strong>Start Time:</strong> <input type="starttime" name="starttime" value={form.starttime || ''} onChange={handleFormChange} required />
+                    <strong>Start Time:</strong>{' '}
+                    <input
+                      type="starttime"
+                      name="starttime"
+                      value={form.starttime || ''}
+                      onChange={handleFormChange}
+                      required
+                    />
                   </div>
                   <div style={{ marginBottom: 8 }}>
-                    <strong>End Time:</strong> <input type="endtime" name="endtime" value={form.endtime || ''} onChange={handleFormChange} required />
+                    <strong>End Time:</strong>{' '}
+                    <input
+                      type="endtime"
+                      name="endtime"
+                      value={form.endtime || ''}
+                      onChange={handleFormChange}
+                      required
+                    />
                   </div>
                   <div style={{ marginBottom: 8 }}>
-                    <strong>Title:</strong> <input type="text" name="title" value={form.title || ''} onChange={handleFormChange} required />
+                    <strong>Title:</strong>{' '}
+                    <input
+                      type="text"
+                      name="title"
+                      value={form.title || ''}
+                      onChange={handleFormChange}
+                      required
+                    />
                   </div>
                   <div style={{ marginBottom: 8 }}>
-                    <strong>Type:</strong> <select name="type" value={form.type || 'Swim'} onChange={handleFormChange}>
+                    <strong>Type:</strong>{' '}
+                    <select
+                      name="type"
+                      value={form.type || 'Swim'}
+                      onChange={handleFormChange}
+                    >
                       <option value="Swim">Swim</option>
                       <option value="Gym">Gym</option>
                     </select>
                   </div>
                   <div style={{ marginBottom: 8 }}>
-                    <strong>Groups:</strong> <input type="text" name="groups" value={form.groups || ''} onChange={handleFormChange} />
+                    <strong>Groups:</strong>{' '}
+                    <input
+                      type="text"
+                      name="groups"
+                      value={form.groups || ''}
+                      onChange={handleFormChange}
+                    />
                   </div>
                   <div style={{ marginBottom: 8 }}>
-                    <strong>Volume:</strong> <input type="text" name="volume" value={form.volume || ''} onChange={handleFormChange} />
+                    <strong>Volume:</strong>{' '}
+                    <input
+                      type="text"
+                      name="volume"
+                      value={form.volume || ''}
+                      onChange={handleFormChange}
+                    />
                   </div>
                   <div style={{ marginBottom: 8 }}>
                     <strong>Description:</strong>
@@ -320,25 +559,42 @@ const TrainingsPage = () => {
                           fontFamily: 'monospace',
                           whiteSpace: 'pre',
                           tabSize: 4,
-                          overflowWrap: 'break-word',
-                          resize: 'vertical',
                         }}
-                        rows={5}
                         wrap="off"
                         spellCheck={false}
                       />
                     </div>
                   </div>
                   <div style={{ marginBottom: 8 }}>
-                    <strong>Location:</strong> <input type="text" name="location" value={form.location || ''} onChange={handleFormChange} />
+                    <strong>Location:</strong>{' '}
+                    <input
+                      type="text"
+                      name="location"
+                      value={form.location || ''}
+                      onChange={handleFormChange}
+                    />
                   </div>
                   <div style={{ marginBottom: 8 }}>
-                    <strong>Pool Name:</strong> <input type="text" name="poolname" value={form.poolname || ''} onChange={handleFormChange} />
+                    <strong>Pool Name:</strong>{' '}
+                    <input
+                      type="text"
+                      name="poolname"
+                      value={form.poolname || ''}
+                      onChange={handleFormChange}
+                    />
                   </div>
                   <div style={{ marginBottom: 8 }}>
-                    <strong>Pool Length:</strong> <input type="text" name="poollength" value={form.poollength || ''} onChange={handleFormChange} />
+                    <strong>Pool Length:</strong>{' '}
+                    <input
+                      type="text"
+                      name="poollength"
+                      value={form.poollength || ''}
+                      onChange={handleFormChange}
+                    />
                   </div>
-                  <button type="submit" style={{ marginTop: 12 }}>Create</button>
+                  <button type="submit" style={{ marginTop: 12 }}>
+                    Create
+                  </button>
                 </form>
               </>
             ) : editMode ? (
@@ -351,28 +607,73 @@ const TrainingsPage = () => {
                   }}
                 >
                   <div style={{ marginBottom: 8 }}>
-                    <strong>Date:</strong> <input type="date" name="date" value={form.date || ''} onChange={handleFormChange} required />
+                    <strong>Date:</strong>{' '}
+                    <input
+                      type="date"
+                      name="date"
+                      value={form.date || ''}
+                      onChange={handleFormChange}
+                      required
+                    />
                   </div>
                   <div style={{ marginBottom: 8 }}>
-                    <strong>Start Time:</strong> <input type="starttime" name="starttime" value={form.starttime || ''} onChange={handleFormChange} required />
+                    <strong>Start Time:</strong>{' '}
+                    <input
+                      type="starttime"
+                      name="starttime"
+                      value={form.starttime || ''}
+                      onChange={handleFormChange}
+                      required
+                    />
                   </div>
                   <div style={{ marginBottom: 8 }}>
-                    <strong>End Time:</strong> <input type="endtime" name="endtime" value={form.endtime || ''} onChange={handleFormChange} required />
+                    <strong>End Time:</strong>{' '}
+                    <input
+                      type="endtime"
+                      name="endtime"
+                      value={form.endtime || ''}
+                      onChange={handleFormChange}
+                      required
+                    />
                   </div>
                   <div style={{ marginBottom: 8 }}>
-                    <strong>Title:</strong> <input type="text" name="title" value={form.title || ''} onChange={handleFormChange} required />
+                    <strong>Title:</strong>{' '}
+                    <input
+                      type="text"
+                      name="title"
+                      value={form.title || ''}
+                      onChange={handleFormChange}
+                      required
+                    />
                   </div>
                   <div style={{ marginBottom: 8 }}>
-                    <strong>Type:</strong> <select name="type" value={form.type || 'Swim'} onChange={handleFormChange}>
+                    <strong>Type:</strong>{' '}
+                    <select
+                      name="type"
+                      value={form.type || 'Swim'}
+                      onChange={handleFormChange}
+                    >
                       <option value="Swim">Swim</option>
                       <option value="Gym">Gym</option>
                     </select>
                   </div>
                   <div style={{ marginBottom: 8 }}>
-                    <strong>Groups:</strong> <input type="text" name="groups" value={form.groups || ''} onChange={handleFormChange} />
+                    <strong>Groups:</strong>{' '}
+                    <input
+                      type="text"
+                      name="groups"
+                      value={form.groups || ''}
+                      onChange={handleFormChange}
+                    />
                   </div>
                   <div style={{ marginBottom: 8 }}>
-                    <strong>Volume:</strong> <input type="text" name="volume" value={form.volume || ''} onChange={handleFormChange} />
+                    <strong>Volume:</strong>{' '}
+                    <input
+                      type="text"
+                      name="volume"
+                      value={form.volume || ''}
+                      onChange={handleFormChange}
+                    />
                   </div>
                   <div style={{ marginBottom: 8 }}>
                     <strong>Description:</strong>
@@ -397,59 +698,178 @@ const TrainingsPage = () => {
                     </div>
                   </div>
                   <div style={{ marginBottom: 8 }}>
-                    <strong>Location:</strong> <input type="text" name="location" value={form.location || ''} onChange={handleFormChange} />
+                    <strong>Location:</strong>{' '}
+                    <input
+                      type="text"
+                      name="location"
+                      value={form.location || ''}
+                      onChange={handleFormChange}
+                    />
                   </div>
                   <div style={{ marginBottom: 8 }}>
-                    <strong>Pool Name:</strong> <input type="text" name="poolname" value={form.poolname || ''} onChange={handleFormChange} />
+                    <strong>Pool Name:</strong>{' '}
+                    <input
+                      type="text"
+                      name="poolname"
+                      value={form.poolname || ''}
+                      onChange={handleFormChange}
+                    />
                   </div>
                   <div style={{ marginBottom: 8 }}>
-                    <strong>Pool Length:</strong> <input type="text" name="poollength" value={form.poollength || ''} onChange={handleFormChange} />
+                    <strong>Pool Length:</strong>{' '}
+                    <input
+                      type="text"
+                      name="poollength"
+                      value={form.poollength || ''}
+                      onChange={handleFormChange}
+                    />
                   </div>
-                  <button type="submit" style={{ marginTop: 12 }}>Save</button>
+                  <button type="submit" style={{ marginTop: 12 }}>
+                    Save
+                  </button>
                 </form>
               </>
             ) : (
               <>
                 <h3>Session Details</h3>
-                <div style={{ marginBottom: 8, textAlign: 'left' }}>
-                  <strong>Date:</strong> {selectedTraining.date}
+                <div className="table-container" style={{ overflowX: 'auto' }}>
+                  <table
+                    style={{
+                      width: '100%',
+                      borderCollapse: 'collapse',
+                      border: '1px solid #ddd',
+                    }}
+                  >
+                    <thead>
+                      <tr style={{ backgroundColor: '#f5f5f5' }}>
+                        <th
+                          style={{
+                            padding: '12px',
+                            border: '1px solid #ddd',
+                            textAlign: 'left',
+                            fontWeight: 'bold',
+                          }}
+                        >
+                          Field
+                        </th>
+                        <th
+                          style={{
+                            padding: '12px',
+                            border: '1px solid #ddd',
+                            textAlign: 'left',
+                            fontWeight: 'bold',
+                          }}
+                        >
+                          Value
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { field: 'Date', value: selectedTraining.date },
+                        {
+                          field: 'Start Time',
+                          value: selectedTraining.starttime,
+                        },
+                        { field: 'End Time', value: selectedTraining.endtime },
+                        { field: 'Title', value: selectedTraining.title },
+                        { field: 'Type', value: selectedTraining.type },
+                        {
+                          field: 'Groups',
+                          value: selectedTraining.groups || '-',
+                        },
+                        {
+                          field: 'Volume',
+                          value: selectedTraining.volume || '-',
+                        },
+                        {
+                          field: 'Description',
+                          value: selectedTraining.description || '-',
+                        },
+                        {
+                          field: 'Location',
+                          value: selectedTraining.location || '-',
+                        },
+                        {
+                          field: 'Pool Name',
+                          value: selectedTraining.poolname || '-',
+                        },
+                        {
+                          field: 'Pool Length',
+                          value: selectedTraining.poollength || '-',
+                        },
+                      ].map((item, index) => (
+                        <tr
+                          key={item.field}
+                          style={{
+                            backgroundColor:
+                              index % 2 === 0 ? '#f9f9f9' : 'white',
+                          }}
+                        >
+                          <td
+                            style={{
+                              padding: '8px',
+                              border: '1px solid #ddd',
+                              fontWeight: 'bold',
+                            }}
+                          >
+                            {item.field}
+                          </td>
+                          <td
+                            style={{
+                              padding: '8px',
+                              border: '1px solid #ddd',
+                              textAlign:
+                                item.field === 'Description' ? 'left' : 'left',
+                            }}
+                          >
+                            {item.field === 'Description' ? (
+                              <div
+                                style={{
+                                  whiteSpace: 'pre-wrap',
+                                  textAlign: 'left',
+                                }}
+                              >
+                                {item.value}
+                              </div>
+                            ) : (
+                              item.value
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-                <div style={{ marginBottom: 8, textAlign: 'left' }}>
-                  <strong>Start Time:</strong> {selectedTraining.starttime}
-                </div>
-                <div style={{ marginBottom: 8, textAlign: 'left' }}>
-                  <strong>End Time:</strong> {selectedTraining.endtime}
-                </div>
-                <div style={{ marginBottom: 8, textAlign: 'left' }}>
-                  <strong>Title:</strong> {selectedTraining.title}
-                </div>
-                <div style={{ marginBottom: 8, textAlign: 'left' }}>
-                  <strong>Type:</strong> {selectedTraining.type}
-                </div>
-                <div style={{ marginBottom: 8, textAlign: 'left' }}>
-                  <strong>Groups:</strong> {selectedTraining.groups || "-"}
-                </div>
-                <div style={{ marginBottom: 8, textAlign: 'left' }}>
-                  <strong>Volume:</strong> {selectedTraining.volume || "-"}
-                </div>
-                <div style={{ marginBottom: 8, textAlign: 'left' }}>
-                  <strong>Description:</strong>
-                  <div style={{ whiteSpace: "pre-wrap", marginTop: 4 }}>
-                    {selectedTraining.description || "-"}
-                  </div>
-                </div>
-                <div style={{ marginBottom: 8, textAlign: 'left' }}>
-                  <strong>Location:</strong> {selectedTraining.location || "-"}
-                </div>
-                <div style={{ marginBottom: 8, textAlign: 'left' }}>
-                  <strong>Pool Name:</strong> {selectedTraining.poolname || "-"}
-                </div>
-                <div style={{ marginBottom: 8, textAlign: 'left' }}>
-                  <strong>Pool Length:</strong> {selectedTraining.poollength || "-"}
-                </div>
-                <div style={{ marginTop: 16 }}>
-                  <button onClick={handleEdit} style={{ marginRight: 8 }}>Edit</button>
-                  <button onClick={handleDelete} style={{ marginRight: 8, color: 'red' }}>Delete</button>
+                <div style={{ marginTop: 16, textAlign: 'center' }}>
+                  <button
+                    onClick={handleEdit}
+                    style={{
+                      marginRight: 8,
+                      padding: '8px 16px',
+                      backgroundColor: '#007bff',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    style={{
+                      marginRight: 8,
+                      padding: '8px 16px',
+                      backgroundColor: '#dc3545',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Delete
+                  </button>
                 </div>
               </>
             )}

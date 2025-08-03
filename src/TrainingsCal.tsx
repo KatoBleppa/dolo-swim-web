@@ -98,6 +98,7 @@ const TrainingsCalendar: React.FC = () => {
       .finally(() => setLoading(false));
   }, [currentYear, currentMonth]);
 
+
   const days = getMonthDays(currentYear, currentMonth);
   // Adjust first day index for Monday start
   const firstDayWeekday = getMondayStartIndex(days[0].getDay());
@@ -106,6 +107,16 @@ const TrainingsCalendar: React.FC = () => {
   while (calendarCells.length % 7 !== 0) calendarCells.push(null);
 
   const sessionsByDate = groupSessionsByDate(sessions);
+
+  // --- Cell width calculation ---
+  // Render all cell contents to a hidden div to measure the widest
+  const [cellWidth, setCellWidth] = React.useState<number>(80);
+  const cellMeasureRef = React.useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (cellMeasureRef.current) {
+      setCellWidth(cellMeasureRef.current.offsetWidth + 8); // add a little padding
+    }
+  }, [sessions, currentMonth, currentYear]);
 
   const handlePrevMonth = () => {
     if (currentMonth === 0) {
@@ -236,6 +247,9 @@ const handleDeleteSession = async () => {
 
   return (
     <div>
+      <div style={{ marginBottom: 8 }}>
+        <h1 style={{ textAlign: 'center', margin: 0 }}>Calendar of trainings</h1>
+      </div>
       <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
         <button onClick={handlePrevMonth}>&lt;</button>
         <h2 style={{ flex: 1, textAlign: "center", margin: 0 }}>
@@ -243,67 +257,81 @@ const handleDeleteSession = async () => {
         </h2>
         <button onClick={handleNextMonth}>&gt;</button>
       </div>
+
       {loading ? (
         <div>Loading...</div>
       ) : (
-        <table style={{ borderCollapse: "collapse", width: "100%" }}>
-          <thead>
-            <tr>
-              {weekdayHeaders.map((d) => (
-                <th key={d}>{d}</th>
+        <>
+          {/* Hidden measure cell */}
+          <div style={{ position: 'absolute', left: -9999, top: -9999, visibility: 'hidden' }} ref={cellMeasureRef}>
+            <div style={{ fontWeight: "bold", color: "#1976d2" }}>
+              30 <span style={{ marginLeft: 4, fontSize: 14, color: "#888" }}>+</span>
+            </div>
+            <div>
+              {Array(3).fill(0).map((_, i) => (
+                <span key={i} style={{ display: 'inline-block', marginRight: 4 }}><FaSwimmer /> <FaDumbbell /></span>
               ))}
-            </tr>
-          </thead>
-          <tbody>
-          {Array.from({ length: calendarCells.length / 7 }).map((_, weekIdx) => (
-            <tr key={weekIdx}>
-              {calendarCells.slice(weekIdx * 7, weekIdx * 7 + 7).map((day, idx) => {
-                if (!day) return <td key={idx} />;
-                const year = day.getFullYear();
-                const month = (day.getMonth() + 1).toString().padStart(2, '0');
-                const date = day.getDate().toString().padStart(2, '0');
-                const dateStr = `${year}-${month}-${date}`;
-                const daySessions = sessionsByDate[dateStr] || [];
-                return (
-                  <td key={idx} style={{ border: "1px solid #ccc", verticalAlign: "top", height: 80 }}>
-                    <div
-                      style={{ fontWeight: "bold", cursor: "pointer", color: "#1976d2" }}
-                      onClick={() => openModal(dateStr)}
-                      title="Add session"
-                    >
-                      {day.getDate()}
-                      <span style={{ marginLeft: 4, fontSize: 14, color: "#888" }}>+</span>
-                    </div>
-                    <div>
-                      {daySessions.map((session) =>
-                        session.type === "Gym" ? (
-                          <div
-                            key={session.session_id}
-                            style={{ color: "#2e7d32", fontSize: 16, cursor: "pointer", display: "inline-block", marginRight: 4 }}
-                            onClick={() => openSessionDetails(session)}
-                            title="View gym session details"
-                          >
-                            <FaDumbbell />
-                          </div>
-                        ) : (
-                          <div
-                            key={session.session_id}
-                            style={{ color: "#1976d2", fontSize: 16, cursor: "pointer", display: "inline-block", marginRight: 4 }}
-                            onClick={() => openSessionDetails(session)}
-                            title="View swim session details"
-                          >
-                            <FaSwimmer />
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
-        </table>
+            </div>
+          </div>
+          <table style={{ borderCollapse: "collapse", width: "100%" }}>
+            <thead>
+              <tr>
+                {weekdayHeaders.map((d) => (
+                  <th key={d}>{d}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+            {Array.from({ length: calendarCells.length / 7 }).map((_, weekIdx) => (
+              <tr key={weekIdx}>
+                {calendarCells.slice(weekIdx * 7, weekIdx * 7 + 7).map((day, idx) => {
+                  if (!day) return <td key={idx} style={{ width: cellWidth, minWidth: cellWidth, maxWidth: cellWidth }} />;
+                  const year = day.getFullYear();
+                  const month = (day.getMonth() + 1).toString().padStart(2, '0');
+                  const date = day.getDate().toString().padStart(2, '0');
+                  const dateStr = `${year}-${month}-${date}`;
+                  const daySessions = sessionsByDate[dateStr] || [];
+                  return (
+                    <td key={idx} style={{ border: "1px solid #ccc", verticalAlign: "top", height: 80, width: cellWidth, minWidth: cellWidth, maxWidth: cellWidth }}>
+                      <div
+                        style={{ fontWeight: "bold", cursor: "pointer", color: "#1976d2" }}
+                        onClick={() => openModal(dateStr)}
+                        title="Add session"
+                      >
+                        {day.getDate()}
+                        <span style={{ marginLeft: 4, fontSize: 14, color: "#888" }}>+</span>
+                      </div>
+                      <div>
+                        {daySessions.map((session) =>
+                          session.type === "Gym" ? (
+                            <div
+                              key={session.session_id}
+                              style={{ color: "#2e7d32", fontSize: 16, cursor: "pointer", display: "inline-block", marginRight: 4 }}
+                              onClick={() => openSessionDetails(session)}
+                              title="View gym session details"
+                            >
+                              <FaDumbbell />
+                            </div>
+                          ) : (
+                            <div
+                              key={session.session_id}
+                              style={{ color: "#1976d2", fontSize: 16, cursor: "pointer", display: "inline-block", marginRight: 4 }}
+                              onClick={() => openSessionDetails(session)}
+                              title="View swim session details"
+                            >
+                              <FaSwimmer />
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+          </table>
+        </>
       )}
 
      {/* Modal */}
