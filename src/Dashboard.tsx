@@ -9,8 +9,8 @@ const Dashboard = () => (
       <div
         style={{
           display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
+          gap: '2rem',
+          justifyContent: 'center',
           background: 'linear-gradient(to right, #e0e0e0, #f5f5f5)',
           borderRadius: '8px',
         }}
@@ -18,23 +18,52 @@ const Dashboard = () => (
         <div
           style={{
             display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
+            gap: '2rem',
+            justifyContent: 'center',
           }}
         >
-          <a
-            href="/athletes"
-            target="_blank"
-            title="Athlete profile"
-            className="dashboard-icon"
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
           >
-            <img
-              src={icons.person}
-              alt="Athlete profile"
-              style={{ width: '100px', height: '100px' }}
-            />
-          </a>
-          <h2>Athletes</h2>
+            <a
+              href="/athletes"
+              target="_blank"
+              title="Athlete profile"
+              className="dashboard-icon"
+            >
+              <img
+                src={icons.person}
+                alt="Athlete profile"
+                style={{ width: '100px', height: '100px' }}
+              />
+            </a>
+            <h2>Athletes</h2>
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+            <a
+              href="/personalbests"
+              target="_blank"
+              title="Personal Bests"
+              className="dashboard-icon"
+            >
+              <img
+                src={icons.personalbest}
+                alt="Personal Bests"
+                style={{ width: '100px', height: '100px' }}
+              />
+            </a>
+            <h2>Personal Bests</h2>
+          </div>
         </div>
       </div>
       {/* ----------------- trainings ----------------*/}

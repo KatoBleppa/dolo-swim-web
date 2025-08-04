@@ -33,14 +33,19 @@ const TrendPage: React.FC = () => {
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [selectedFincode, setSelectedFincode] = useState<'all' | number>('all');
   const [selectedType, setSelectedType] = useState<'Swim' | 'Gym'>('Swim');
-  const [selectedGroup, setSelectedGroup] = useState<'all' | 'ASS' | 'EA' | 'EB' | 'Prop'>('all');
+  const [selectedGroup, setSelectedGroup] = useState<
+    'all' | 'ASS' | 'EA' | 'EB' | 'Prop'
+  >('all');
   const [chartData, setChartData] = useState<AttendanceData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchAthletes = async () => {
-      let query = supabase.from('athletes').select('fincode, name, groups').order('name', { ascending: true });
+      let query = supabase
+        .from('athletes')
+        .select('fincode, name, groups')
+        .order('name', { ascending: true });
       if (selectedGroup !== 'all') {
         query = query.eq('groups', selectedGroup);
       }
@@ -65,10 +70,13 @@ const TrendPage: React.FC = () => {
         return;
       }
 
-      const { data, error } = await supabase.rpc('get_monthly_attendance_percentage', {
-        fincode_input: selectedFincode,
-        session_type_input: selectedType,
-      });
+      const { data, error } = await supabase.rpc(
+        'get_monthly_attendance_percentage',
+        {
+          fincode_input: selectedFincode,
+          session_type_input: selectedType,
+        }
+      );
 
       if (error) {
         setError(error.message);
@@ -90,57 +98,86 @@ const TrendPage: React.FC = () => {
   const chartWidth = months.length * (barWidth + barGap);
 
   return (
-    <div style={{ maxWidth: 900, margin: '2rem auto', padding: '2rem', background: '#fff', borderRadius: 8 }}>
-      <h2>Attendance Trend (Sep 2024 – Aug 2025)</h2>
-      <div
-        style={{
-          marginBottom: 16,
-          display: 'flex',
-          gap: 16,
-          alignItems: 'center',
-          justifyContent: 'center', // Center the dropdowns horizontally
-        }}
-      >
-        <label>Group:</label>
-        <select
-          value={selectedGroup}
-          onChange={e => setSelectedGroup(e.target.value as 'all' | 'ASS' | 'EA' | 'EB' | 'Prop')}
-        >
-          <option value="all">All groups</option>
-          <option value="ASS">ASS</option>
-          <option value="EA">EA</option>
-          <option value="EB">EB</option>
-          <option value="Prop">Prop</option>
-        </select>
+    <div className="page-container">
+      <h1 className="page-title">Attendance Trend</h1>
+      <h2 className="text-center mb-4">Sep 2024 – Aug 2025</h2>
+      <div className="form-group">
+        <div>
+          <label htmlFor="group-select" className="form-label">
+            Group:
+          </label>
+          <select
+            id="group-select"
+            value={selectedGroup}
+            onChange={e =>
+              setSelectedGroup(
+                e.target.value as 'all' | 'ASS' | 'EA' | 'EB' | 'Prop'
+              )
+            }
+            className="form-select ml-1"
+          >
+            <option value="all">All groups</option>
+            <option value="ASS">ASS</option>
+            <option value="EA">EA</option>
+            <option value="EB">EB</option>
+            <option value="Prop">Prop</option>
+          </select>
+        </div>
 
-        <label>Filter by athlete:</label>
-        <select
-          value={selectedFincode}
-          onChange={e => setSelectedFincode(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-        >
-          <option value="all">Select an athlete</option>
-          {athletes.map(a => (
-            <option key={a.fincode} value={a.fincode}>{a.name} ({a.fincode})</option>
-          ))}
-        </select>
+        <div>
+          <label htmlFor="athlete-select" className="form-label">
+            Filter by athlete:
+          </label>
+          <select
+            id="athlete-select"
+            value={selectedFincode}
+            onChange={e =>
+              setSelectedFincode(
+                e.target.value === 'all' ? 'all' : Number(e.target.value)
+              )
+            }
+            className="form-select ml-1"
+          >
+            <option value="all">Select an athlete</option>
+            {athletes.map(a => (
+              <option key={a.fincode} value={a.fincode}>
+                {a.name} ({a.fincode})
+              </option>
+            ))}
+          </select>
+        </div>
 
-        <label>Session type:</label>
-        <select
-          value={selectedType}
-          onChange={e => setSelectedType(e.target.value as 'Swim' | 'Gym')}
-        >
-          <option value="Swim">Swim</option>
-          <option value="Gym">Gym</option>
-        </select>
+        <div>
+          <label htmlFor="type-select" className="form-label">
+            Session type:
+          </label>
+          <select
+            id="type-select"
+            value={selectedType}
+            onChange={e => setSelectedType(e.target.value as 'Swim' | 'Gym')}
+            className="form-select ml-1"
+          >
+            <option value="Swim">Swim</option>
+            <option value="Gym">Gym</option>
+          </select>
+        </div>
       </div>
 
+      {error && <div className="error-message">{error}</div>}
+
       {loading ? (
-        <div>Loading...</div>
-      ) : error ? (
-        <div style={{ color: 'red' }}>{error}</div>
+        <div className="loading-message">Loading trend data...</div>
+      ) : selectedFincode === 'all' ? (
+        <div className="no-data">
+          Please select an athlete to view their attendance trend
+        </div>
       ) : (
-        <div style={{ overflowX: 'auto', width: 900 }}>
-          <svg width={chartWidth} height={chartHeight + 60} style={{ background: '#f8f8ff', borderRadius: 8 }}>
+        <div style={{ overflowX: 'auto', width: '100%' }}>
+          <svg
+            width={chartWidth}
+            height={chartHeight + 60}
+            style={{ background: '#f8f8ff', borderRadius: 8 }}
+          >
             {/* Y axis grid */}
             {[0, 20, 40, 60, 80, 100].map(y => (
               <g key={y}>
@@ -151,7 +188,16 @@ const TrendPage: React.FC = () => {
                   y2={chartTopPadding + chartHeight - (y / 100) * chartHeight}
                   stroke="#eee"
                 />
-                <text x={-8} y={chartTopPadding + chartHeight - (y / 100) * chartHeight + 5} fontSize={12} textAnchor="end">{y}%</text>
+                <text
+                  x={-8}
+                  y={
+                    chartTopPadding + chartHeight - (y / 100) * chartHeight + 5
+                  }
+                  fontSize={12}
+                  textAnchor="end"
+                >
+                  {y}%
+                </text>
               </g>
             ))}
             {/* Bars */}
@@ -200,6 +246,22 @@ const TrendPage: React.FC = () => {
               );
             })}
           </svg>
+        </div>
+      )}
+
+      {selectedFincode !== 'all' && chartData.length > 0 && (
+        <div style={{ marginTop: '20px', fontSize: '14px', color: '#666' }}>
+          <p>
+            Showing attendance trend for{' '}
+            <strong>
+              {athletes.find(a => a.fincode === selectedFincode)?.name}
+            </strong>{' '}
+            in <strong>{selectedType}</strong> sessions
+          </p>
+          <p>
+            <strong>Note:</strong> Green bars indicate attendance ≥80%, red bars
+            indicate attendance &lt;80%
+          </p>
         </div>
       )}
     </div>

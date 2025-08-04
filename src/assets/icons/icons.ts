@@ -1,4 +1,5 @@
 import personIcon from './icons8-person-100.png';
+import personalbestIcon from './icons8-personal-trainer-hauttyp-4-96.png';
 import calendarIcon from './icons8-calendar-100.png';
 import listIcon from './icons8-list-100.png';
 import graphIcon from './icons8-graph-100.png';
@@ -10,6 +11,7 @@ import trophyIcon from './icons8-trophy-100.png';
 
 export const icons = {
   person: personIcon,
+  personalbest: personalbestIcon,
   calendar: calendarIcon,
   list: listIcon,
   graph: graphIcon,

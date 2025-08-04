@@ -1,5 +1,5 @@
-import React, { useState} from "react";
-import { supabase } from "./supabaseClient";
+import React, { useState } from 'react';
+import { supabase } from './supabaseClient';
 
 interface Athlete {
   fincode: number;
@@ -14,11 +14,11 @@ interface Athlete {
 const AttendanceList: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [period, setPeriod] = useState<string>("season");
-  const [customStart, setCustomStart] = useState<string>("");
-  const [customEnd, setCustomEnd] = useState<string>("");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [period, setPeriod] = useState<string>('season');
+  const [customStart, setCustomStart] = useState<string>('');
+  const [customEnd, setCustomEnd] = useState<string>('');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [athleteGroupFilter, setAthleteGroupFilter] = useState<string>('all');
 
@@ -35,8 +35,12 @@ const AttendanceList: React.FC = () => {
       endDate = '2025-08-31';
     } else if (period === 'month') {
       const now = new Date();
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+        .toISOString()
+        .slice(0, 10);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+        .toISOString()
+        .slice(0, 10);
     } else if (period === 'custom' && customStart && customEnd) {
       startDate = customStart;
       endDate = customEnd;
@@ -48,7 +52,7 @@ const AttendanceList: React.FC = () => {
         gruppo: groupParam,
         start_date: startDate,
         end_date: endDate,
-        session_type: typeParam
+        session_type: typeParam,
       });
       // Order by percent desc
       query = query.order('percent', { ascending: false });
@@ -67,103 +71,239 @@ const AttendanceList: React.FC = () => {
   };
 
   return (
-    <div>
-      <h2>Attendance Filter</h2>
-      <div style={{ marginBottom: 16 }}>
-        <label style={{ marginRight: 8 }}>Select period: </label>
-        <select value={period} onChange={e => setPeriod(e.target.value)}>
-          <option value="season">Season (01.09.2024 - 31.08.2025)</option>
-          <option value="month">Current Month</option>
-          <option value="custom">Custom Range</option>
-        </select>
-        {period === "custom" && (
-          <span style={{ marginLeft: 12 }}>
+    <div className="page-container">
+      <h1 className="page-title">Attendance Summary</h1>
+      <div className="form-group">
+        <div>
+          <label htmlFor="period-select" className="form-label">
+            Select period:
+          </label>
+          <select
+            id="period-select"
+            value={period}
+            onChange={e => setPeriod(e.target.value)}
+            className="form-select ml-1"
+          >
+            <option value="season">Season (01.09.2024 - 31.08.2025)</option>
+            <option value="month">Current Month</option>
+            <option value="custom">Custom Range</option>
+          </select>
+        </div>
+
+        {period === 'custom' && (
+          <div>
             <input
               type="date"
               value={customStart}
               onChange={e => setCustomStart(e.target.value)}
               required
-              style={{ marginRight: 8 }}
+              className="form-input mr-1"
             />
             <input
               type="date"
               value={customEnd}
               onChange={e => setCustomEnd(e.target.value)}
               required
-              style={{ marginRight: 8 }}
+              className="form-input"
             />
-          </span>
+          </div>
         )}
-        <label style={{ marginLeft: 24, marginRight: 8 }}>Filter Type:</label>
-        <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
-          <option value="all">All</option>
-          <option value="Swim">Swim</option>
-          <option value="Gym">Gym</option>
-        </select>
-        <label style={{ marginLeft: 24, marginRight: 8 }}>Filter Status:</label>
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-          <option value="all">All</option>
-          <option value="P">P</option>
-          <option value="A">A</option>
-          <option value="J">J</option>
-        </select>
-        <label style={{ marginLeft: 24, marginRight: 8 }}>Filter Group:</label>
-        <select value={athleteGroupFilter} onChange={e => setAthleteGroupFilter(e.target.value)}>
-          <option value="all">All</option>
-          <option value="ASS">ASS</option>
-          <option value="EA">EA</option>
-          <option value="EB">EB</option>
-          <option value="PROP">PROP</option>
-        </select>
-        <button style={{ marginLeft: 24 }} onClick={handleFilter} disabled={loading}>
-          {loading ? "Filtering..." : "Filter"}
+
+        <div>
+          <label htmlFor="type-select" className="form-label">
+            Filter Type:
+          </label>
+          <select
+            id="type-select"
+            value={typeFilter}
+            onChange={e => setTypeFilter(e.target.value)}
+            className="form-select ml-1"
+          >
+            <option value="all">All</option>
+            <option value="Swim">Swim</option>
+            <option value="Gym">Gym</option>
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="status-select" className="form-label">
+            Filter Status:
+          </label>
+          <select
+            id="status-select"
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+            className="form-select ml-1"
+          >
+            <option value="all">All</option>
+            <option value="P">P</option>
+            <option value="A">A</option>
+            <option value="J">J</option>
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="group-select" className="form-label">
+            Filter Group:
+          </label>
+          <select
+            id="group-select"
+            value={athleteGroupFilter}
+            onChange={e => setAthleteGroupFilter(e.target.value)}
+            className="form-select ml-1"
+          >
+            <option value="all">All</option>
+            <option value="ASS">ASS</option>
+            <option value="EA">EA</option>
+            <option value="EB">EB</option>
+            <option value="PROP">PROP</option>
+          </select>
+        </div>
+
+        <button
+          onClick={handleFilter}
+          disabled={loading}
+          className={`btn ${loading ? 'btn-secondary' : 'btn-primary'}`}
+        >
+          {loading ? 'Filtering...' : 'Filter'}
         </button>
       </div>
-      {error && <div style={{ color: 'red', marginBottom: 12 }}>Error: {error}</div>}
-      {/* Athletes summary table */}
-      <h2 style={{ marginTop: 40 }}>Group: {athleteGroupFilter === 'all' ? 'All' : athleteGroupFilter}</h2>
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 12 }}>
-        <thead>
-          <tr>
-            <th style={{ border: '1px solid #ccc', padding: '8px' }}>Portrait</th>
-            <th style={{ border: '1px solid #ccc', padding: '8px' }}>Fincode</th>
-            <th style={{ border: '1px solid #ccc', padding: '8px' }}>Name</th>
-            <th style={{ border: '1px solid #ccc', padding: '8px' }}>Present</th>
-            <th style={{ border: '1px solid #ccc', padding: '8px' }}>Justified</th>
-            <th style={{ border: '1px solid #ccc', padding: '8px' }}>Total Sessions</th>
-            <th style={{ border: '1px solid #ccc', padding: '8px' }}>Percent</th>
-          </tr>
-        </thead>
-        <tbody>
-          {athletes.map((ath, idx) => (
-            <tr key={ath.fincode || idx}>
-              <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'center' }}>
-                {ath.photo ? (
-                  <img
-                    src={ath.photo}
-                    alt={ath.name ?? 'Athlete portrait'}
-                    style={{ width: 50, height: 50, borderRadius: 25, marginRight: 10, objectFit: 'cover' }}
-                    referrerPolicy="no-referrer"
-                    onError={e => { e.currentTarget.src = 'https://ui-avatars.com/api/?name=Avatar&background=cccccc&color=ffffff&size=50'; }}
-                  />
+      {error && <div className="error-message">{error}</div>}
+
+      {loading ? (
+        <div className="loading-message">Loading attendance data...</div>
+      ) : (
+        <>
+          <h2 className="text-center mb-3">
+            Group: {athleteGroupFilter === 'all' ? 'All' : athleteGroupFilter}
+          </h2>
+          <div className="table-container">
+            <table className="table">
+              <thead className="table-header">
+                <tr>
+                  <th>Portrait</th>
+                  <th>Fincode</th>
+                  <th>Name</th>
+                  <th>Present</th>
+                  <th>Justified</th>
+                  <th>Total Sessions</th>
+                  <th>Percent</th>
+                </tr>
+              </thead>
+              <tbody>
+                {athletes.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="no-data">
+                      No data available for the selected filters
+                    </td>
+                  </tr>
                 ) : (
-                  <img
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(ath.name || 'Avatar')}&background=cccccc&color=ffffff&size=50`}
-                    alt="Default avatar"
-                    style={{ width: 50, height: 50, borderRadius: 25, marginRight: 10, objectFit: 'cover' }}
-                  />
+                  athletes.map((ath, idx) => (
+                    <tr key={ath.fincode || idx}>
+                      <td
+                        style={{
+                          padding: '8px',
+                          border: '1px solid #ddd',
+                          textAlign: 'center',
+                        }}
+                      >
+                        {ath.photo ? (
+                          <img
+                            src={ath.photo}
+                            alt={ath.name ?? 'Athlete portrait'}
+                            style={{
+                              width: 50,
+                              height: 50,
+                              borderRadius: 25,
+                              objectFit: 'cover',
+                            }}
+                            referrerPolicy="no-referrer"
+                            onError={e => {
+                              e.currentTarget.src =
+                                'https://ui-avatars.com/api/?name=Avatar&background=cccccc&color=ffffff&size=50';
+                            }}
+                          />
+                        ) : (
+                          <img
+                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(ath.name || 'Avatar')}&background=cccccc&color=ffffff&size=50`}
+                            alt="Default avatar"
+                            style={{
+                              width: 50,
+                              height: 50,
+                              borderRadius: 25,
+                              objectFit: 'cover',
+                            }}
+                          />
+                        )}
+                      </td>
+                      <td
+                        style={{
+                          padding: '8px',
+                          border: '1px solid #ddd',
+                          textAlign: 'center',
+                        }}
+                      >
+                        {ath.fincode}
+                      </td>
+                      <td style={{ padding: '8px', border: '1px solid #ddd' }}>
+                        {ath.name}
+                      </td>
+                      <td
+                        style={{
+                          padding: '8px',
+                          border: '1px solid #ddd',
+                          textAlign: 'center',
+                        }}
+                      >
+                        {ath.presenze}
+                      </td>
+                      <td
+                        style={{
+                          padding: '8px',
+                          border: '1px solid #ddd',
+                          textAlign: 'center',
+                        }}
+                      >
+                        {ath.giustificate}
+                      </td>
+                      <td
+                        style={{
+                          padding: '8px',
+                          border: '1px solid #ddd',
+                          textAlign: 'center',
+                        }}
+                      >
+                        {ath.total_sessions}
+                      </td>
+                      <td
+                        style={{
+                          padding: '8px',
+                          border: '1px solid #ddd',
+                          textAlign: 'center',
+                        }}
+                      >
+                        {ath.percent != null
+                          ? ath.percent.toFixed(1) + '%'
+                          : ''}
+                      </td>
+                    </tr>
+                  ))
                 )}
-              </td>
-              <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'center' }}>{ath.fincode}</td>
-              <td style={{ border: '1px solid #ccc', padding: '8px' }}>{ath.name}</td>
-              <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'center' }}>{ath.presenze}</td>
-              <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'center' }}>{ath.giustificate}</td>
-              <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'center' }}>{ath.total_sessions}</td>
-              <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'center' }}>{ath.percent != null ? ath.percent.toFixed(1) + '%' : ''}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </tbody>
+            </table>
+          </div>
+
+          {athletes.length > 0 && (
+            <div style={{ marginTop: '20px', fontSize: '14px', color: '#666' }}>
+              <p>Showing {athletes.length} athletes</p>
+              <p>
+                <strong>Note:</strong> Attendance percentages are calculated
+                based on total sessions in the selected period
+              </p>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };

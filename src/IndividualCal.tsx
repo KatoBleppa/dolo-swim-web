@@ -112,38 +112,17 @@ const IndividualCal: React.FC = () => {
   }
 
   return (
-    <div
-      style={{
-        maxWidth: 900,
-        margin: '2rem auto',
-        padding: '2rem',
-        background: '#fff',
-        borderRadius: 8,
-      }}
-    >
-      <h2>Individual Calendar</h2>
-      <div
-        style={{
-          display: 'flex',
-          gap: 16,
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: '2rem',
-        }}
-      >
-        <label style={{ fontWeight: 'bold' }}>
+    <div className="page-container">
+      <h2 className="page-title">Individual Calendar</h2>
+      <div className="form-group">
+        <label className="form-label">
           Group:
           <select
             value={selectedGroup}
             onChange={e =>
               setSelectedGroup(e.target.value as 'ASS' | 'EA' | 'EB' | 'PROP')
             }
-            style={{
-              marginLeft: 8,
-              padding: '8px',
-              borderRadius: '4px',
-              border: '1px solid #ccc',
-            }}
+            className="form-select ml-1"
           >
             <option value="ASS">ASS</option>
             <option value="EA">EA</option>
@@ -151,17 +130,12 @@ const IndividualCal: React.FC = () => {
             <option value="PROP">PROP</option>
           </select>
         </label>
-        <label style={{ fontWeight: 'bold' }}>
+        <label className="form-label">
           Athlete:
           <select
             value={selectedFincode}
             onChange={e => setSelectedFincode(Number(e.target.value))}
-            style={{
-              marginLeft: 8,
-              padding: '8px',
-              borderRadius: '4px',
-              border: '1px solid #ccc',
-            }}
+            className="form-select ml-1"
           >
             <option value="">Select athlete</option>
             {athletes.map(a => (
@@ -171,93 +145,38 @@ const IndividualCal: React.FC = () => {
             ))}
           </select>
         </label>
-        <label style={{ fontWeight: 'bold' }}>
+        <label className="form-label">
           Session type:
           <select
             value={selectedType}
             onChange={e => setSelectedType(e.target.value as 'Swim' | 'Gym')}
-            style={{
-              marginLeft: 8,
-              padding: '8px',
-              borderRadius: '4px',
-              border: '1px solid #ccc',
-            }}
+            className="form-select ml-1"
           >
             <option value="Swim">Swim</option>
             <option value="Gym">Gym</option>
           </select>
         </label>
       </div>
-      <div
-        style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}
-      >
-        <button
-          onClick={() => changeMonth(-1)}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            marginRight: '8px',
-          }}
-        >
+      <div className="nav-container">
+        <button onClick={() => changeMonth(-1)} className="btn btn-primary">
           {'<'}
         </button>
-        <div
-          style={{
-            margin: '0 16px',
-            fontWeight: 600,
-            display: 'flex',
-            alignItems: 'center',
-          }}
-        >
+        <div className="nav-title">
           {new Date(year, month - 1).toLocaleString('default', {
             month: 'long',
             year: 'numeric',
           })}
         </div>
-        <button
-          onClick={() => changeMonth(1)}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            marginLeft: '8px',
-          }}
-        >
+        <button onClick={() => changeMonth(1)} className="btn btn-primary">
           {'>'}
         </button>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <table
-          style={{
-            borderCollapse: 'collapse',
-            background: '#fff',
-            border: '1px solid #ddd',
-            borderRadius: '8px',
-            overflow: 'hidden',
-          }}
-        >
-          <thead>
-            <tr style={{ backgroundColor: '#f5f5f5' }}>
+      <div className="d-flex justify-center">
+        <table className="calendar-table">
+          <thead className="calendar-header">
+            <tr>
               {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => (
-                <th
-                  key={d}
-                  style={{
-                    padding: '12px',
-                    fontWeight: 'bold',
-                    border: '1px solid #ddd',
-                    textAlign: 'center',
-                    minWidth: '50px',
-                  }}
-                >
-                  {d}
-                </th>
+                <th key={d}>{d}</th>
               ))}
             </tr>
           </thead>
@@ -266,52 +185,21 @@ const IndividualCal: React.FC = () => {
               <tr key={i}>
                 {week.map((day, j) => {
                   if (!day)
-                    return (
-                      <td
-                        key={j}
-                        style={{
-                          width: 50,
-                          height: 50,
-                          border: '1px solid #ddd',
-                        }}
-                      />
-                    );
-                  let bg = '';
-                  if (day.status === 'P') bg = '#4caf50';
-                  else if (day.status === 'J') bg = '#ffeb3b';
-                  else if (day.status === 'A') bg = '#f44336';
-                  else bg = '#f9f9f9';
+                    return <td key={j} className="calendar-cell empty" />;
+
+                  let cellClass = 'calendar-cell ';
+                  if (day.status === 'P') cellClass += 'present';
+                  else if (day.status === 'J') cellClass += 'justified';
+                  else if (day.status === 'A') cellClass += 'absent';
+                  else cellClass += 'no-session';
+
                   return (
                     <td
                       key={j}
-                      style={{
-                        width: 50,
-                        height: 50,
-                        textAlign: 'center',
-                        background: bg,
-                        color:
-                          bg === '#ffeb3b'
-                            ? '#333'
-                            : bg === '#f9f9f9'
-                              ? '#333'
-                              : '#fff',
-                        border: '1px solid #ddd',
-                        fontWeight: 'bold',
-                        cursor: 'pointer',
-                        transition: 'background 0.2s, transform 0.1s',
-                        position: 'relative',
-                      }}
+                      className={cellClass}
                       title={
                         day.status ? `Status: ${day.status}` : 'No session'
                       }
-                      onMouseEnter={e => {
-                        if (day.status) {
-                          e.currentTarget.style.transform = 'scale(1.05)';
-                        }
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.transform = 'scale(1)';
-                      }}
                     >
                       {parseInt(day.date.slice(-2), 10)}
                     </td>
@@ -324,103 +212,34 @@ const IndividualCal: React.FC = () => {
       </div>
 
       {/* Legend */}
-      <div
-        style={{
-          marginTop: '2rem',
-          display: 'flex',
-          justifyContent: 'center',
-          gap: '1rem',
-          flexWrap: 'wrap',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '8px 12px',
-            backgroundColor: '#f8f9fa',
-            borderRadius: '4px',
-            border: '1px solid #ddd',
-          }}
-        >
+      <div className="legend">
+        <div className="legend-item">
           <div
-            style={{
-              width: 16,
-              height: 16,
-              backgroundColor: '#4caf50',
-              borderRadius: '3px',
-            }}
+            className="legend-color"
+            style={{ backgroundColor: '#4caf50' }}
           />
-          <span style={{ fontSize: '14px', fontWeight: 'bold' }}>Present</span>
+          <span className="legend-text">Present</span>
         </div>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '8px 12px',
-            backgroundColor: '#f8f9fa',
-            borderRadius: '4px',
-            border: '1px solid #ddd',
-          }}
-        >
+        <div className="legend-item">
           <div
-            style={{
-              width: 16,
-              height: 16,
-              backgroundColor: '#ffeb3b',
-              borderRadius: '3px',
-            }}
+            className="legend-color"
+            style={{ backgroundColor: '#ffeb3b' }}
           />
-          <span style={{ fontSize: '14px', fontWeight: 'bold' }}>
-            Justified
-          </span>
+          <span className="legend-text">Justified</span>
         </div>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '8px 12px',
-            backgroundColor: '#f8f9fa',
-            borderRadius: '4px',
-            border: '1px solid #ddd',
-          }}
-        >
+        <div className="legend-item">
           <div
-            style={{
-              width: 16,
-              height: 16,
-              backgroundColor: '#f44336',
-              borderRadius: '3px',
-            }}
+            className="legend-color"
+            style={{ backgroundColor: '#f44336' }}
           />
-          <span style={{ fontSize: '14px', fontWeight: 'bold' }}>Absent</span>
+          <span className="legend-text">Absent</span>
         </div>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '8px 12px',
-            backgroundColor: '#f8f9fa',
-            borderRadius: '4px',
-            border: '1px solid #ddd',
-          }}
-        >
+        <div className="legend-item">
           <div
-            style={{
-              width: 16,
-              height: 16,
-              backgroundColor: '#f9f9f9',
-              borderRadius: '3px',
-              border: '1px solid #ddd',
-            }}
+            className="legend-color"
+            style={{ backgroundColor: '#f9f9f9', border: '1px solid #ddd' }}
           />
-          <span style={{ fontSize: '14px', fontWeight: 'bold' }}>
-            No Session
-          </span>
+          <span className="legend-text">No Session</span>
         </div>
       </div>
     </div>

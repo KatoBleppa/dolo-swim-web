@@ -137,34 +137,19 @@ const Progress: React.FC = () => {
   };
 
   return (
-    <div className="progress-container" style={{ padding: '20px' }}>
-      <h1>Swimming Progress Analysis</h1>
-      <h2>2023-24 to 2024-25</h2>
-      <div
-        className="filters"
-        style={{
-          marginBottom: '20px',
-          display: 'flex',
-          gap: '20px',
-          alignItems: 'center',
-        }}
-      >
+    <div className="page-container">
+      <h1 className="page-title">Swimming Progress Analysis</h1>
+      <h2 className="text-center mb-4">2023-24 to 2024-25</h2>
+      <div className="form-group">
         <div>
-          <label
-            htmlFor="course-select"
-            style={{ marginRight: '10px', fontWeight: 'bold' }}
-          >
+          <label htmlFor="course-select" className="form-label">
             Course:
           </label>
           <select
             id="course-select"
             value={selectedCourse}
             onChange={e => setSelectedCourse(e.target.value)}
-            style={{
-              padding: '8px',
-              borderRadius: '4px',
-              border: '1px solid #ccc',
-            }}
+            className="form-select ml-1"
           >
             {courseOptions.map(option => (
               <option key={option.value} value={option.value}>
@@ -175,21 +160,14 @@ const Progress: React.FC = () => {
         </div>
 
         <div>
-          <label
-            htmlFor="group-select"
-            style={{ marginRight: '10px', fontWeight: 'bold' }}
-          >
+          <label htmlFor="group-select" className="form-label">
             Group:
           </label>
           <select
             id="group-select"
             value={selectedGroup}
             onChange={e => setSelectedGroup(e.target.value)}
-            style={{
-              padding: '8px',
-              borderRadius: '4px',
-              border: '1px solid #ccc',
-            }}
+            className="form-select ml-1"
           >
             {groupOptions.map(option => (
               <option key={option.value} value={option.value}>
@@ -202,154 +180,37 @@ const Progress: React.FC = () => {
         <button
           onClick={fetchProgressData}
           disabled={loading}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            opacity: loading ? 0.6 : 1,
-          }}
+          className={`btn ${loading ? 'btn-secondary' : 'btn-primary'}`}
         >
           {loading ? 'Loading...' : 'Refresh Data'}
         </button>
       </div>
 
-      {error && (
-        <div
-          style={{
-            color: 'red',
-            marginBottom: '20px',
-            padding: '10px',
-            backgroundColor: '#ffe6e6',
-            borderRadius: '4px',
-          }}
-        >
-          {error}
-        </div>
-      )}
+      {error && <div className="error-message">{error}</div>}
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '40px' }}>
-          Loading progress data...
-        </div>
+        <div className="loading-message">Loading progress data...</div>
       ) : (
-        <div className="table-container" style={{ overflowX: 'auto' }}>
-          <table
-            style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              border: '1px solid #ddd',
-            }}
-          >
-            <thead>
-              <tr style={{ backgroundColor: '#f5f5f5' }}>
-                <th
-                  style={{
-                    padding: '12px',
-                    border: '1px solid #ddd',
-                    textAlign: 'left',
-                  }}
-                >
-                  Member ID
-                </th>
-                <th
-                  style={{
-                    padding: '12px',
-                    border: '1px solid #ddd',
-                    textAlign: 'left',
-                  }}
-                >
-                  Name
-                </th>
-
-                <th
-                  style={{
-                    padding: '12px',
-                    border: '1px solid #ddd',
-                    textAlign: 'left',
-                  }}
-                >
-                  Distance
-                </th>
-                <th
-                  style={{
-                    padding: '12px',
-                    border: '1px solid #ddd',
-                    textAlign: 'left',
-                  }}
-                >
-                  Stroke
-                </th>
-                <th
-                  style={{
-                    padding: '12px',
-                    border: '1px solid #ddd',
-                    textAlign: 'left',
-                  }}
-                >
-                  Date old
-                </th>
-                <th
-                  style={{
-                    padding: '12px',
-                    border: '1px solid #ddd',
-                    textAlign: 'left',
-                  }}
-                >
-                  Time old
-                </th>
-                <th
-                  style={{
-                    padding: '12px',
-                    border: '1px solid #ddd',
-                    textAlign: 'left',
-                  }}
-                >
-                  Date now
-                </th>
-
-                <th
-                  style={{
-                    padding: '12px',
-                    border: '1px solid #ddd',
-                    textAlign: 'left',
-                  }}
-                >
-                  Time now
-                </th>
-                <th
-                  style={{
-                    padding: '12px',
-                    border: '1px solid #ddd',
-                    textAlign: 'left',
-                  }}
-                >
-                  Delta (sec)
-                </th>
-                <th
-                  style={{
-                    padding: '12px',
-                    border: '1px solid #ddd',
-                    textAlign: 'left',
-                  }}
-                >
-                  Improvement (%)
-                </th>
+        <div className="table-container">
+          <table className="table">
+            <thead className="table-header">
+              <tr>
+                <th>Member ID</th>
+                <th>Name</th>
+                <th>Distance</th>
+                <th>Stroke</th>
+                <th>Date old</th>
+                <th>Time old</th>
+                <th>Date now</th>
+                <th>Time now</th>
+                <th>Delta (sec)</th>
+                <th>Impr (%)</th>
               </tr>
             </thead>
             <tbody>
               {progressData.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={10}
-                    style={{
-                      padding: '20px',
-                      textAlign: 'center',
-                      color: '#666',
-                    }}
-                  >
+                  <td colSpan={10} className="no-data">
                     No data available for the selected filters
                   </td>
                 </tr>
@@ -364,104 +225,34 @@ const Progress: React.FC = () => {
                       // Add swimmer's data rows
                       swimmerRows.forEach((row, localIndex) => {
                         rows.push(
-                          <tr
-                            key={`${swimmerName}-${localIndex}`}
-                            style={{
-                              backgroundColor:
-                                globalIndex % 2 === 0 ? '#f9f9f9' : 'white',
-                            }}
-                          >
+                          <tr key={`${swimmerName}-${localIndex}`}>
+                            <td>{row.membersid}</td>
+                            <td>{row.name}</td>
+                            <td>{row.distance}</td>
+                            <td>{row.stroke_shortname}</td>
+                            <td>{row.eventdate_prima}</td>
+                            <td>{row.tempo_prima}</td>
+                            <td>{row.eventdate_dopo}</td>
+                            <td>{row.tempo_dopo}</td>
                             <td
-                              style={{
-                                padding: '8px',
-                                border: '1px solid #ddd',
-                              }}
-                            >
-                              {row.membersid}
-                            </td>
-                            <td
-                              style={{
-                                padding: '8px',
-                                border: '1px solid #ddd',
-                              }}
-                            >
-                              {row.name}
-                            </td>
-                            <td
-                              style={{
-                                padding: '8px',
-                                border: '1px solid #ddd',
-                              }}
-                            >
-                              {row.distance}
-                            </td>
-                            <td
-                              style={{
-                                padding: '8px',
-                                border: '1px solid #ddd',
-                              }}
-                            >
-                              {row.stroke_shortname}
-                            </td>
-                            <td
-                              style={{
-                                padding: '8px',
-                                border: '1px solid #ddd',
-                              }}
-                            >
-                              {row.eventdate_prima}
-                            </td>
-                            <td
-                              style={{
-                                padding: '8px',
-                                border: '1px solid #ddd',
-                              }}
-                            >
-                              {row.tempo_prima}
-                            </td>
-                            <td
-                              style={{
-                                padding: '8px',
-                                border: '1px solid #ddd',
-                              }}
-                            >
-                              {row.eventdate_dopo}
-                            </td>
-                            <td
-                              style={{
-                                padding: '8px',
-                                border: '1px solid #ddd',
-                              }}
-                            >
-                              {row.tempo_dopo}
-                            </td>
-                            <td
-                              style={{
-                                padding: '8px',
-                                border: '1px solid #ddd',
-                                color:
-                                  row.delta_sec < 0
-                                    ? 'green'
-                                    : row.delta_sec > 0
-                                      ? 'red'
-                                      : 'black',
-                                fontWeight: 'bold',
-                              }}
+                              className={`progress-delta ${
+                                row.delta_sec < 0
+                                  ? 'improvement'
+                                  : row.delta_sec > 0
+                                    ? 'decline'
+                                    : 'neutral'
+                              }`}
                             >
                               {row.delta_sec ? row.delta_sec.toFixed(2) : '-'}
                             </td>
                             <td
-                              style={{
-                                padding: '8px',
-                                border: '1px solid #ddd',
-                                color:
-                                  row.miglioramento_perc > 0
-                                    ? 'green'
-                                    : row.miglioramento_perc < 0
-                                      ? 'red'
-                                      : 'black',
-                                fontWeight: 'bold',
-                              }}
+                              className={`progress-percentage ${
+                                row.miglioramento_perc > 0
+                                  ? 'improvement'
+                                  : row.miglioramento_perc < 0
+                                    ? 'decline'
+                                    : 'neutral'
+                              }`}
                             >
                               {formatPercentage(row.miglioramento_perc)}
                             </td>
@@ -476,74 +267,27 @@ const Progress: React.FC = () => {
                       rows.push(
                         <tr
                           key={`${swimmerName}-average`}
-                          style={{
-                            backgroundColor: '#e6f3ff',
-                            borderBottom: '2px solid #007bff',
-                            fontWeight: 'bold',
-                          }}
+                          className="swimmer-average-row"
                         >
-                          <td
-                            style={{ padding: '8px', border: '1px solid #ddd' }}
-                          >
-                            -
-                          </td>
-                          <td
-                            style={{
-                              padding: '8px',
-                              border: '1px solid #ddd',
-                              fontStyle: 'italic',
-                            }}
-                          >
+                          <td>-</td>
+                          <td className="swimmer-average-name">
                             {swimmerName} - Average
                           </td>
+                          <td>-</td>
+                          <td>-</td>
+                          <td>-</td>
+                          <td>-</td>
+                          <td>-</td>
+                          <td>-</td>
+                          <td>-</td>
                           <td
-                            style={{ padding: '8px', border: '1px solid #ddd' }}
-                          >
-                            -
-                          </td>
-                          <td
-                            style={{ padding: '8px', border: '1px solid #ddd' }}
-                          >
-                            -
-                          </td>
-                          <td
-                            style={{ padding: '8px', border: '1px solid #ddd' }}
-                          >
-                            -
-                          </td>
-                          <td
-                            style={{ padding: '8px', border: '1px solid #ddd' }}
-                          >
-                            -
-                          </td>
-                          <td
-                            style={{ padding: '8px', border: '1px solid #ddd' }}
-                          >
-                            -
-                          </td>
-                          <td
-                            style={{ padding: '8px', border: '1px solid #ddd' }}
-                          >
-                            -
-                          </td>
-                          <td
-                            style={{ padding: '8px', border: '1px solid #ddd' }}
-                          >
-                            -
-                          </td>
-                          <td
-                            style={{
-                              padding: '8px',
-                              border: '1px solid #ddd',
-                              color:
-                                avgImprovement > 0
-                                  ? 'green'
-                                  : avgImprovement < 0
-                                    ? 'red'
-                                    : 'black',
-                              fontWeight: 'bold',
-                              fontSize: '14px',
-                            }}
+                            className={`swimmer-average-percentage ${
+                              avgImprovement > 0
+                                ? 'text-success'
+                                : avgImprovement < 0
+                                  ? 'text-danger'
+                                  : 'text-muted'
+                            }`}
                           >
                             {formatPercentage(avgImprovement)}
                           </td>
@@ -564,49 +308,24 @@ const Progress: React.FC = () => {
       {progressData.length > 0 && (
         <>
           {/* Team Average Section */}
-          <div
-            style={{
-              marginTop: '30px',
-              padding: '20px',
-              backgroundColor: '#f8f9fa',
-              border: '2px solid #007bff',
-              borderRadius: '8px',
-              textAlign: 'center',
-            }}
-          >
-            <h3
-              style={{
-                margin: '0 0 15px 0',
-                color: '#007bff',
-                fontSize: '18px',
-                fontWeight: 'bold',
-              }}
-            >
+          <div className="team-average-container">
+            <h3 className="team-average-title">
               Team Average - {selectedGroup} Group (
               {courseOptions.find(c => c.value === selectedCourse)?.label}m
               Course)
             </h3>
             <div
-              style={{
-                fontSize: '24px',
-                fontWeight: 'bold',
-                color:
-                  calculateTeamAverage(progressData) > 0
-                    ? '#28a745'
-                    : calculateTeamAverage(progressData) < 0
-                      ? '#dc3545'
-                      : '#6c757d',
-              }}
+              className={`team-average-value ${
+                calculateTeamAverage(progressData) > 0
+                  ? 'text-success'
+                  : calculateTeamAverage(progressData) < 0
+                    ? 'text-danger'
+                    : 'text-muted'
+              }`}
             >
               {formatPercentage(calculateTeamAverage(progressData))}
             </div>
-            <div
-              style={{
-                fontSize: '14px',
-                color: '#6c757d',
-                marginTop: '8px',
-              }}
-            >
+            <div className="team-average-note">
               Based on{' '}
               {
                 progressData.filter(row => row.miglioramento_perc != null)
@@ -617,7 +336,7 @@ const Progress: React.FC = () => {
           </div>
 
           {/* Existing summary section */}
-          <div style={{ marginTop: '20px', fontSize: '14px', color: '#666' }}>
+          <div className="summary-section">
             <p>Showing {progressData.length} records</p>
             <p>
               <strong>Note:</strong> Green values indicate improvement, red
