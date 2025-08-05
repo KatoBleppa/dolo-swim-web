@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient';
+import eyeIcon from './assets/icons/icons8-eye-100.png';
 
 // This page lists all records from the 'athletes' table
 const ListAthletesPage = () => {
@@ -103,7 +104,7 @@ const ListAthletesPage = () => {
                 <tr className="table-header">
                   <th>Portrait</th>
                   <th>Name</th>
-                  <th>Details</th>
+                  <th>Det</th>
                 </tr>
               </thead>
               <tbody>
@@ -137,7 +138,7 @@ const ListAthletesPage = () => {
                         className="athlete-view-btn"
                       >
                         <img
-                          src="../assets/icons/icons8-eye-100.png"
+                          src={eyeIcon}
                           alt="View"
                           className="athlete-view-icon"
                         />
