@@ -18,7 +18,6 @@ const AttendanceList: React.FC = () => {
   const [customStart, setCustomStart] = useState<string>('');
   const [customEnd, setCustomEnd] = useState<string>('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [athleteGroupFilter, setAthleteGroupFilter] = useState<string>('all');
 
