@@ -137,7 +137,7 @@ const ListAthletesPage = () => {
                         className="athlete-view-btn"
                       >
                         <img
-                          src="src\assets\icons\icons8-eye-100.png"
+                          src="../assets/icons/icons8-eye-100.png"
                           alt="View"
                           className="athlete-view-icon"
                         />
