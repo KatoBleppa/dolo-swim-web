@@ -4,12 +4,11 @@ import AppRouter from './AppRouter';
 import Navbar from './components/Navbar';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { useEffect } from 'react';
-import { initializeAnonymousAuth } from './supabaseClient';
 
 function App() {
   useEffect(() => {
     // Initialize anonymous authentication on app start
-    initializeAnonymousAuth();
+
   }, []);
 
   return (
