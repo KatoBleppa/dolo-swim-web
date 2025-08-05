@@ -43,8 +43,6 @@ const Personalbests: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        console.log('Fetching races and athletes...');
-
         // Fetch races with relaycount = 1
         const { data: racesData, error: racesError } = await supabase
           .from('_races')
@@ -70,9 +68,6 @@ const Personalbests: React.FC = () => {
           );
           throw athletesError;
         }
-
-        console.log('Races data:', racesData);
-        console.log('Athletes data:', athletesData);
 
         if (racesData) {
           setRaces(racesData);
@@ -118,7 +113,6 @@ const Personalbests: React.FC = () => {
       }
 
       try {
-        console.log('Processing personal bests for:', selectedAthlete);
 
         // Get unique distance+stroke combinations with raceid
         const uniqueEvents = Array.from(
@@ -138,11 +132,6 @@ const Personalbests: React.FC = () => {
           })
           .sort((a, b) => a.raceid - b.raceid); // Sort by raceid
 
-        console.log(
-          'Unique events from races (ordered by raceid):',
-          uniqueEvents
-        );
-
         // Fetch personal best results for this athlete
         const { data: resultsData, error: resultsError } = await supabase
           .from('personal_bests')
@@ -151,19 +140,8 @@ const Personalbests: React.FC = () => {
 
         if (resultsError) {
           console.error('Error fetching personal bests:', resultsError);
-          throw resultsError;
-        }
-
-        console.log('Results data for athlete:', resultsData);
-
-        // Debug: Check course values in the data
-        if (resultsData && resultsData.length > 0) {
-          const courseValues = [...new Set(resultsData.map(r => r.course))];
-          console.log('Available course values:', courseValues);
-
-          // Sample some records to see the structure
-          console.log('Sample records:', resultsData.slice(0, 3));
-        }
+          throw resultsError
+        }   
 
         // Process each event
         const processedBests: PersonalBestRecord[] = uniqueEvents.map(event => {

@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 const Navbar: React.FC = () => {
   const location = useLocation();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navItems = [
     { path: '/', label: 'Dashboard' },
@@ -16,66 +17,47 @@ const Navbar: React.FC = () => {
     { path: '/progress', label: 'Progress' },
   ];
 
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
+  const closeMenu = () => {
+    setIsMenuOpen(false);
+  };
+
   return (
-    <nav
-      style={{
-        backgroundColor: '#f8f9fa',
-        borderBottom: '1px solid #dee2e6',
-        padding: '0.5rem 0',
-        marginBottom: '1rem',
-      }}
-    >
-      <div
-        style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: '0 1rem',
-        }}
-      >
-        <ul
-          style={{
-            display: 'flex',
-            listStyle: 'none',
-            margin: 0,
-            padding: 0,
-            flexWrap: 'wrap',
-            gap: '0.5rem',
-          }}
+    <nav className="navbar">
+      <div className="navbar-container">
+        {/* Mobile menu button */}
+        <button
+          className="navbar-toggle"
+          onClick={toggleMenu}
+          aria-label="Toggle navigation menu"
         >
+          <span className={`hamburger-line ${isMenuOpen ? 'open' : ''}`}></span>
+          <span className={`hamburger-line ${isMenuOpen ? 'open' : ''}`}></span>
+          <span className={`hamburger-line ${isMenuOpen ? 'open' : ''}`}></span>
+        </button>
+
+        {/* Navigation menu */}
+        <ul className={`navbar-menu ${isMenuOpen ? 'open' : ''}`}>
           {navItems.map(item => (
-            <li key={item.path}>
+            <li key={item.path} className="navbar-item">
               <Link
                 to={item.path}
-                style={{
-                  textDecoration: 'none',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '4px',
-                  display: 'block',
-                  color: location.pathname === item.path ? '#007bff' : '#333',
-                  backgroundColor:
-                    location.pathname === item.path ? '#e9ecef' : 'transparent',
-                  fontWeight:
-                    location.pathname === item.path ? 'bold' : 'normal',
-                  transition: 'background-color 0.2s, color 0.2s',
-                }}
-                onMouseEnter={e => {
-                  if (location.pathname !== item.path) {
-                    e.currentTarget.style.backgroundColor = '#f8f9fa';
-                    e.currentTarget.style.color = '#007bff';
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (location.pathname !== item.path) {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = '#333';
-                  }
-                }}
+                className={`navbar-link ${location.pathname === item.path ? 'active' : ''}`}
+                onClick={closeMenu} // Close menu when link is clicked
               >
                 {item.label}
               </Link>
             </li>
           ))}
         </ul>
+
+        {/* Overlay for mobile menu */}
+        {isMenuOpen && (
+          <div className="navbar-overlay" onClick={closeMenu}></div>
+        )}
       </div>
     </nav>
   );
