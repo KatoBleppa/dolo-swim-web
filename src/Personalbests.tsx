@@ -1,10 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient';
 
-interface PersonalBest {
-  [key: string]: any; // Flexible interface for personal bests data
-}
-
 interface Athlete {
   [key: string]: any; // Flexible interface for athlete data
 }
