@@ -1,5 +1,5 @@
 import sportProLogo from './assets/SportProLogo_02.png';
-import './App.css';
+import './styles/App.css';
 import AppRouter from './AppRouter';
 import Navbar from './components/Navbar';
 import { BrowserRouter as Router } from 'react-router-dom';
