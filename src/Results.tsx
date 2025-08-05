@@ -350,14 +350,9 @@ const Results: React.FC = () => {
         <div className="no-data">No results found.</div>
       ) : (
         <>
-          <h3 className="modal-title">Results Data</h3>
+          <h3 className="modal-title">Results Dta</h3>
           <div
             className="table-container"
-            style={{
-              borderRadius: '8px',
-              overflow: 'hidden',
-              border: '1px solid #ddd',
-            }}
           >
             <table className="table">
               <thead>

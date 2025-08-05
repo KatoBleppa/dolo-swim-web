@@ -78,15 +78,13 @@ body {
     padding: 0.75rem;
     border-radius: 4px;
     /* Force container to fit mobile screens */
-    max-width: 95%;
-    width: 95%;
+
     box-sizing: border-box;
     overflow-x: hidden;
   }
 
   /* Ensure all direct children don't overflow */
   .page-container > * {
-    max-width: 100%;
     box-sizing: border-box;
   }
 }
@@ -292,16 +290,13 @@ body {
     align-items: stretch;
     gap: 1rem;
     /* Ensure form groups don't overflow */
-    width: 90%;
-    max-width: 90%;
-    margin-left: 0;
-    margin-right: 0;
+
+
   }
 
   /* Force all form group children to fit */
   .form-group > * {
-    width: 90%;
-    max-width: 90%;
+
     box-sizing: border-box;
   }
 }
