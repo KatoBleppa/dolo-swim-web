@@ -1,12 +1,22 @@
-
-import sportProLogo from './assets/SportProLogo_02.png'
-import './App.css'
-import AppRouter from './AppRouter'
+import sportProLogo from './assets/SportProLogo_02.png';
+import './App.css';
+import AppRouter from './AppRouter';
+import Navbar from './components/Navbar';
+import { BrowserRouter as Router } from 'react-router-dom';
 
 function App() {
   return (
-    <>
-      <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 16, marginBottom: 8 }}>
+    <Router>
+      <div
+        style={{
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          marginTop: 16,
+          marginBottom: 8,
+        }}
+      >
         <img
           src={sportProLogo}
           className="logo"
@@ -15,11 +25,12 @@ function App() {
         />
         <h2 style={{ margin: 0, marginBottom: 20 }}>SwimTrack 4.0</h2>
       </div>
+      <Navbar />
       <div style={{ marginTop: 0 }}>
         <AppRouter />
       </div>
-    </>
+    </Router>
   );
 }
 
-export default App
+export default App;

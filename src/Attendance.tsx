@@ -76,7 +76,7 @@ const AttendanceList: React.FC = () => {
       <div className="form-group">
         <div>
           <label htmlFor="period-select" className="form-label">
-            Select period:
+            Period:
           </label>
           <select
             id="period-select"
@@ -111,7 +111,7 @@ const AttendanceList: React.FC = () => {
 
         <div>
           <label htmlFor="type-select" className="form-label">
-            Filter Type:
+            Type:
           </label>
           <select
             id="type-select"
@@ -126,25 +126,8 @@ const AttendanceList: React.FC = () => {
         </div>
 
         <div>
-          <label htmlFor="status-select" className="form-label">
-            Filter Status:
-          </label>
-          <select
-            id="status-select"
-            value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value)}
-            className="form-select ml-1"
-          >
-            <option value="all">All</option>
-            <option value="P">P</option>
-            <option value="A">A</option>
-            <option value="J">J</option>
-          </select>
-        </div>
-
-        <div>
           <label htmlFor="group-select" className="form-label">
-            Filter Group:
+            Group:
           </label>
           <select
             id="group-select"
@@ -186,8 +169,8 @@ const AttendanceList: React.FC = () => {
                   <th>Name</th>
                   <th>Present</th>
                   <th>Justified</th>
-                  <th>Total Sessions</th>
-                  <th>Percent</th>
+                  <th>Total</th>
+                  <th>Prct</th>
                 </tr>
               </thead>
               <tbody>

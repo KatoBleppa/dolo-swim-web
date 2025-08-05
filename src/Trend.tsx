@@ -126,7 +126,7 @@ const TrendPage: React.FC = () => {
 
         <div>
           <label htmlFor="athlete-select" className="form-label">
-            Filter by athlete:
+            Athlete:
           </label>
           <select
             id="athlete-select"
@@ -149,7 +149,7 @@ const TrendPage: React.FC = () => {
 
         <div>
           <label htmlFor="type-select" className="form-label">
-            Session type:
+            Type:
           </label>
           <select
             id="type-select"

@@ -243,7 +243,7 @@ const Results: React.FC = () => {
       <div className="form-actions">
         <div className="form-group">
           <label htmlFor="meet-filter" className="form-label">
-            Filter by meet:
+            Meet:
           </label>
           <select
             id="meet-filter"
@@ -376,10 +376,6 @@ const Results: React.FC = () => {
                 {Object.entries(groupedResults).map(([groupKey, results]) => {
                   // Get the first result to extract style information
                   const firstResult = results[0];
-
-                  // Debug: log all available fields in the first result
-                  console.log('First result fields:', Object.keys(firstResult));
-                  console.log('First result data:', firstResult);
 
                   const distance = firstResult?.distance || '-';
                   const stroke =

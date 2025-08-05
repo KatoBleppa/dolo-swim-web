@@ -5,12 +5,13 @@ import { supabase } from './supabaseClient';
 const ListAthletesPage = () => {
   const [athletes, setAthletes] = useState<any[]>([]);
   const [filteredAthletes, setFilteredAthletes] = useState<any[]>([]);
-  const [selectedGroup, setSelectedGroup] = useState<string>('ALL');
+  const [selectedGroup, setSelectedGroup] = useState<string>(''); // Changed from 'ALL' to empty string
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedAthlete, setSelectedAthlete] = useState<any | null>(null);
 
   const groupOptions = [
+    { label: 'Select a group...', value: '' }, // Added default option
     { label: 'All Groups', value: 'ALL' },
     { label: 'ASS', value: 'ASS' },
     { label: 'EA', value: 'EA' },
@@ -40,8 +41,8 @@ const ListAthletesPage = () => {
         });
 
         setAthletes(sortedAthletes);
-        // Apply initial filtering
-        filterAthletes(sortedAthletes, selectedGroup);
+        // Don't apply initial filtering - wait for user selection
+        setFilteredAthletes([]); // Start with empty filtered list
       }
       setLoading(false);
     };
@@ -54,7 +55,9 @@ const ListAthletesPage = () => {
   }, [selectedGroup, athletes]);
 
   const filterAthletes = (athleteList: any[], group: string) => {
-    if (group === 'ALL') {
+    if (group === '' || group === null || group === undefined) {
+      setFilteredAthletes([]); // Show nothing when no group is selected
+    } else if (group === 'ALL') {
       setFilteredAthletes(athleteList);
     } else {
       const filtered = athleteList.filter(athlete => athlete.groups === group);
@@ -80,150 +83,152 @@ const ListAthletesPage = () => {
           display: 'flex',
           gap: '20px',
           alignItems: 'center',
+          justifyContent: 'center', // Center align items horizontally
         }}
       >
         <div>
           <label
-            htmlFor="group-select"
-            style={{ marginRight: '10px', fontWeight: 'bold' }}
+        htmlFor="group-select"
+        style={{ marginRight: '10px', fontWeight: 'bold' }}
           >
-            Group:
+        Group:
           </label>
           <select
-            id="group-select"
-            value={selectedGroup}
-            onChange={e => setSelectedGroup(e.target.value)}
-            style={{
-              padding: '8px',
-              borderRadius: '4px',
-              border: '1px solid #ccc',
-            }}
+        id="group-select"
+        value={selectedGroup}
+        onChange={e => setSelectedGroup(e.target.value)}
+        style={{
+          padding: '8px',
+          borderRadius: '4px',
+          border: '1px solid #ccc',
+        }}
           >
-            {groupOptions.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
+        {groupOptions
+          .filter(option => option.value !== 'ALL')
+          .map(option => (
+            <option key={option.value} value={option.value}>
+          {option.label}
+            </option>
+          ))}
           </select>
-        </div>
-
-        <div style={{ fontSize: '14px', color: '#666' }}>
-          Showing {filteredAthletes.length} of {athletes.length} athletes
         </div>
       </div>
 
       {loading && <p>Loading...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      {!loading && !error && filteredAthletes.length > 0 && (
-        <div className="table-container" style={{ overflowX: 'auto' }}>
-          <table
-            style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              border: '1px solid #ddd',
-            }}
-          >
-            <thead>
-              <tr style={{ backgroundColor: '#f5f5f5' }}>
-                <th
-                  style={{
-                    padding: '12px',
-                    border: '1px solid #ddd',
-                    textAlign: 'left',
-                  }}
-                >
-                  Portrait
-                </th>
-                <th
-                  style={{
-                    padding: '12px',
-                    border: '1px solid #ddd',
-                    textAlign: 'left',
-                  }}
-                >
-                  Name
-                </th>
-                <th
-                  style={{
-                    padding: '12px',
-                    border: '1px solid #ddd',
-                    textAlign: 'left',
-                  }}
-                >
-                  Details
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAthletes.map((athlete, idx) => (
-                <tr
-                  key={idx}
-                  style={{
-                    backgroundColor: idx % 2 === 0 ? '#f9f9f9' : 'white',
-                  }}
-                >
-                  <td
+      {!loading &&
+        !error &&
+        selectedGroup !== '' &&
+        filteredAthletes.length > 0 && (
+          <div className="table-container" style={{ overflowX: 'auto' }}>
+            <table
+              style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+                border: '1px solid #ddd',
+              }}
+            >
+              <thead>
+                <tr style={{ backgroundColor: '#f5f5f5' }}>
+                  <th
                     style={{
-                      padding: '8px',
+                      padding: '12px',
                       border: '1px solid #ddd',
-                      textAlign: 'center',
+                      textAlign: 'left',
                     }}
                   >
-                    {athlete.photo ? (
-                      <img
-                        src={athlete.photo}
-                        alt={athlete.name ?? 'Athlete portrait'}
-                        style={{
-                          width: 50,
-                          height: 50,
-                          borderRadius: 25,
-                          marginRight: 10,
-                          objectFit: 'cover',
-                        }}
-                        referrerPolicy="no-referrer"
-                        onError={e => {
-                          e.currentTarget.src =
-                            'https://ui-avatars.com/api/?name=Avatar&background=cccccc&color=ffffff&size=50';
-                        }}
-                      />
-                    ) : (
-                      <img
-                        src="https://ui-avatars.com/api/?name=Avatar&background=cccccc&color=ffffff&size=50"
-                        alt="Default avatar"
-                        style={{
-                          width: 50,
-                          height: 50,
-                          borderRadius: 25,
-                          marginRight: 10,
-                          objectFit: 'cover',
-                        }}
-                      />
-                    )}
-                  </td>
-                  <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                    {athlete.name}
-                  </td>
-                  <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                    <button
-                      onClick={() => setSelectedAthlete(athlete)}
+                    Portrait
+                  </th>
+                  <th
+                    style={{
+                      padding: '12px',
+                      border: '1px solid #ddd',
+                      textAlign: 'left',
+                    }}
+                  >
+                    Name
+                  </th>
+                  <th
+                    style={{
+                      padding: '12px',
+                      border: '1px solid #ddd',
+                      textAlign: 'left',
+                    }}
+                  >
+                    Details
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredAthletes.map((athlete, idx) => (
+                  <tr
+                    key={idx}
+                    style={{
+                      backgroundColor: idx % 2 === 0 ? '#f9f9f9' : 'white',
+                    }}
+                  >
+                    <td
                       style={{
-                        padding: '6px 12px',
-                        backgroundColor: '#007bff',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
+                        padding: '8px',
+                        border: '1px solid #ddd',
+                        textAlign: 'center',
                       }}
                     >
-                      View Details
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+                      {athlete.photo ? (
+                        <img
+                          src={athlete.photo}
+                          alt={athlete.name ?? 'Athlete portrait'}
+                          style={{
+                            width: 50,
+                            height: 50,
+                            borderRadius: 25,
+                            marginRight: 10,
+                            objectFit: 'cover',
+                          }}
+                          referrerPolicy="no-referrer"
+                          onError={e => {
+                            e.currentTarget.src =
+                              'https://ui-avatars.com/api/?name=Avatar&background=cccccc&color=ffffff&size=50';
+                          }}
+                        />
+                      ) : (
+                        <img
+                          src="https://ui-avatars.com/api/?name=Avatar&background=cccccc&color=ffffff&size=50"
+                          alt="Default avatar"
+                          style={{
+                            width: 50,
+                            height: 50,
+                            borderRadius: 25,
+                            marginRight: 10,
+                            objectFit: 'cover',
+                          }}
+                        />
+                      )}
+                    </td>
+                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>
+                      {athlete.name}
+                    </td>
+                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>
+                      <button
+                        onClick={() => setSelectedAthlete(athlete)}
+                        style={{
+                          padding: '6px 12px',
+                          backgroundColor: '#007bff',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       {/* Modal for athlete details */}
       {selectedAthlete && (
         <div
@@ -377,8 +382,14 @@ const ListAthletesPage = () => {
       )}
       {!loading &&
         !error &&
+        selectedGroup !== '' &&
         filteredAthletes.length === 0 &&
         athletes.length > 0 && <p>No athletes found for the selected group.</p>}
+      {!loading && !error && selectedGroup === '' && athletes.length > 0 && (
+        <p style={{ textAlign: 'center', color: '#666', fontStyle: 'italic' }}>
+          Please select a group from the dropdown to view athletes.
+        </p>
+      )}
       {!loading && !error && athletes.length === 0 && <p>No records found.</p>}
     </div>
   );
