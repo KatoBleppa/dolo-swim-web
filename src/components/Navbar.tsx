@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import sportProLogo from '../assets/SportProLogo_02.png';
 
 const Navbar: React.FC = () => {
   const location = useLocation();
@@ -28,6 +29,9 @@ const Navbar: React.FC = () => {
   return (
     <nav className="navbar">
       <div className="navbar-container">
+        {/* Logo */}
+        <img src={sportProLogo} className="navbar-logo" alt="SportPro logo" />
+
         {/* Mobile menu button */}
         <button
           className="navbar-toggle"
