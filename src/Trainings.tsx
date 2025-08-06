@@ -1,5 +1,13 @@
 import { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient';
+import newIcon from './assets/icons/icons8-new-100.png';
+import eyeIcon from './assets/icons/icons8-eye-100.png';
+import saveIcon from './assets/icons/icons8-save-100.png';
+import prevIcon from './assets/icons/icons8-back-to-100.png';
+import nextIcon from './assets/icons/icons8-next-page-100.png';
+import editIcon from './assets/icons/icons8-create-100.png';
+import deleteIcon from './assets/icons/icons8-delete-100.png';
+import closeIcon from './assets/icons/icons8-close-100.png';
 
 const PAGE_SIZE = 20;
 
@@ -8,6 +16,7 @@ const TrainingsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'All' | 'Swim' | 'Gym'>('All');
+  const [groupFilter, setGroupFilter] = useState<string>('All');
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [selectedTraining, setSelectedTraining] = useState<any | null>(null);
@@ -25,6 +34,9 @@ const TrainingsPage = () => {
       let query = supabase.from('sessions').select('*', { count: 'exact' });
       if (filter !== 'All') {
         query = query.eq('type', filter);
+      }
+      if (groupFilter !== 'All') {
+        query = query.eq('groups', groupFilter);
       }
       const from = (page - 1) * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
@@ -44,7 +56,7 @@ const TrainingsPage = () => {
       setLoading(false);
     };
     fetchTrainings();
-  }, [filter, page]);
+  }, [filter, groupFilter, page]);
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
@@ -99,6 +111,7 @@ const TrainingsPage = () => {
       const fetchTrainings = async () => {
         let query = supabase.from('sessions').select('*', { count: 'exact' });
         if (filter !== 'All') query = query.eq('type', filter);
+        if (groupFilter !== 'All') query = query.eq('groups', groupFilter);
         const from = (page - 1) * PAGE_SIZE;
         const to = from + PAGE_SIZE - 1;
         const { data, count } = await query
@@ -131,6 +144,7 @@ const TrainingsPage = () => {
       const fetchTrainings = async () => {
         let query = supabase.from('sessions').select('*', { count: 'exact' });
         if (filter !== 'All') query = query.eq('type', filter);
+        if (groupFilter !== 'All') query = query.eq('groups', groupFilter);
         const from = (page - 1) * PAGE_SIZE;
         const to = from + PAGE_SIZE - 1;
         const { data, count } = await query
@@ -175,6 +189,7 @@ const TrainingsPage = () => {
       const fetchTrainings = async () => {
         let query = supabase.from('sessions').select('*', { count: 'exact' });
         if (filter !== 'All') query = query.eq('type', filter);
+        if (groupFilter !== 'All') query = query.eq('groups', groupFilter);
         const from = 0;
         const to = PAGE_SIZE - 1;
         const { data, count } = await query
@@ -189,11 +204,11 @@ const TrainingsPage = () => {
 
   return (
     <div className="page-container">
-      <h2 className="page-title">Trainings</h2>
+      <h2 className="page-title">Training list</h2>
       <div className="form-actions">
         <div className="form-group">
           <label htmlFor="type-filter" className="form-label">
-            Filter by type:
+            Type:
           </label>
           <select
             id="type-filter"
@@ -209,8 +224,32 @@ const TrainingsPage = () => {
             <option value="Gym">Gym</option>
           </select>
         </div>
-        <button onClick={handleCreate} className="btn-success">
-          + New Training
+        <div className="form-group">
+          <label htmlFor="group-filter" className="form-label">
+            Group:
+          </label>
+          <select
+            id="group-filter"
+            className="form-input"
+            value={groupFilter}
+            onChange={e => {
+              setGroupFilter(e.target.value);
+              setPage(1);
+            }}
+          >
+            <option value="All">All</option>
+            <option value="ASS">ASS</option>
+            <option value="EA">EA</option>
+            <option value="EB">EB</option>
+            <option value="PROP">PROP</option>
+          </select>
+        </div>
+        <button
+          onClick={handleCreate}
+          title="New Training"
+          className="athlete-view-btn"
+        >
+          <img src={newIcon} alt="New" className="athlete-view-icon" />
         </button>
       </div>
       {loading && <p>Loading...</p>}
@@ -223,7 +262,6 @@ const TrainingsPage = () => {
                 <tr>
                   <th>Date</th>
                   <th>Title</th>
-                  <th>Groups</th>
                   <th>Type</th>
                   <th>Volume</th>
                   <th>Details</th>
@@ -234,18 +272,22 @@ const TrainingsPage = () => {
                   <tr key={getTrainingId(training) ?? training.date}>
                     <td>{training.date}</td>
                     <td>{training.title}</td>
-                    <td>{training.groups}</td>
                     <td>{training.type}</td>
                     <td>{training.volume}</td>
-                    <td>
+                    <td align="center">
                       <button
                         onClick={() => {
                           setSelectedTraining(training);
                           setEditMode(false);
                         }}
-                        className="btn-primary"
+                        title="View Details"
+                        className="athlete-view-btn"
                       >
-                        View Details
+                        <img
+                          src={eyeIcon}
+                          alt="View"
+                          className="athlete-view-icon"
+                        />
                       </button>
                     </td>
                   </tr>
@@ -259,7 +301,7 @@ const TrainingsPage = () => {
               disabled={page === 1}
               className={page === 1 ? 'btn-secondary' : 'btn-primary'}
             >
-              Previous
+              <img src={prevIcon} alt="Prev" className="athlete-view-icon" />
             </button>
             <span className="pagination-info">
               Page {page} of {totalPages || 1}
@@ -273,7 +315,7 @@ const TrainingsPage = () => {
                   : 'btn-primary'
               }
             >
-              Next
+              <img src={nextIcon} alt="Next" className="athlete-view-icon" />
             </button>
           </div>
         </>
@@ -293,21 +335,9 @@ const TrainingsPage = () => {
           }}
         >
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <button
-              onClick={() => {
-                setSelectedTraining(null);
-                setEditMode(false);
-                setCreating(false);
-              }}
-              className="modal-close"
-              aria-label="Close"
-            >
-              ✕
-            </button>
             {formError && <p className="error-message">{formError}</p>}
             {creating ? (
               <>
-                //* New Training Session *//
                 <h3 className="modal-title">New Training Session</h3>
                 <form
                   onSubmit={e => {
@@ -484,8 +514,27 @@ const TrainingsPage = () => {
                     </table>
                   </div>
                   <div className="modal-buttons">
-                    <button type="submit" className="btn-primary">
-                      Create
+                    <button type="submit" className="athlete-view-btn">
+                      <img
+                        src={saveIcon}
+                        alt="Save"
+                        className="athlete-view-icon"
+                      />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedTraining(null);
+                        setEditMode(false);
+                        setCreating(false);
+                      }}
+                      title="Close"
+                      className="athlete-view-btn"
+                    >
+                      <img
+                        src={closeIcon}
+                        alt="Close"
+                        className="athlete-view-icon"
+                      />
                     </button>
                   </div>
                 </form>
@@ -670,15 +719,37 @@ const TrainingsPage = () => {
                     </table>
                   </div>
                   <div className="modal-buttons">
-                    <button type="submit" className="btn-primary">
-                      Save
+                    <button
+                      type="submit"
+                      title="Save"
+                      className="athlete-view-btn"
+                    >
+                      <img
+                        src={saveIcon}
+                        alt="Save"
+                        className="athlete-view-icon"
+                      />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedTraining(null);
+                        setEditMode(false);
+                        setCreating(false);
+                      }}
+                      title="Close"
+                      className="athlete-view-btn"
+                    >
+                      <img
+                        src={closeIcon}
+                        alt="Close"
+                        className="athlete-view-icon"
+                      />
                     </button>
                   </div>
                 </form>
               </>
             ) : (
               <>
-                //* Session Details *//
                 <h3 className="modal-title">Session Details</h3>
                 <div className="table-container">
                   <table className="table">
@@ -742,11 +813,42 @@ const TrainingsPage = () => {
                   </table>
                 </div>
                 <div className="modal-buttons">
-                  <button onClick={handleEdit} className="btn-primary">
-                    Edit
+                  <button
+                    onClick={handleEdit}
+                    title="Edit"
+                    className="athlete-view-btn"
+                  >
+                    <img
+                      src={editIcon}
+                      alt="Edit"
+                      className="athlete-view-icon"
+                    />
                   </button>
-                  <button onClick={handleDelete} className="btn-danger">
-                    Delete
+                  <button
+                    onClick={handleDelete}
+                    title="Delete"
+                    className="athlete-view-btn"
+                  >
+                    <img
+                      src={deleteIcon}
+                      alt="Delete"
+                      className="athlete-view-icon"
+                    />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedTraining(null);
+                      setEditMode(false);
+                      setCreating(false);
+                    }}
+                    title="Close"
+                    className="athlete-view-btn"
+                  >
+                    <img
+                      src={closeIcon}
+                      alt="Close"
+                      className="athlete-view-icon"
+                    />
                   </button>
                 </div>
               </>
