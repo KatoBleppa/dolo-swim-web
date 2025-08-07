@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { FaSwimmer, FaDumbbell } from 'react-icons/fa'; // Import gym icon
 import { supabase } from './supabaseClient';
 import AttendanceForm from './AttendanceForm';
+import attendanceIcon from './assets/icons/icons8-checked-user-male-100.png';
+import editIcon from './assets/icons/icons8-create-100.png';
+import deleteIcon from './assets/icons/icons8-delete-100.png';
+import closeIcon from './assets/icons/icons8-close-100.png';
 
 console.log('TrainingsCalendar file loaded');
 
@@ -661,22 +665,45 @@ const TrainingsCalendar: React.FC = () => {
             </div>
             <div className="modal-buttons">
               <button
-                className="btn-primary"
-                onClick={() => openEditModal(selectedSession)}
+                onClick={() => setAttendanceOpen(true)}
+                title="Attendance"
+                className="athlete-view-btn"
               >
-                Edit
+                <img
+                  src={attendanceIcon}
+                  alt="Attendance"
+                  className="athlete-view-icon"
+                />
+              </button>
+
+              <button
+                onClick={() => openEditModal(selectedSession)}
+                title="Edit"
+                className="athlete-view-btn"
+              >
+                <img src={editIcon} alt="Edit" className="athlete-view-icon" />
               </button>
               <button
-                className="btn-tertiary"
-                onClick={() => setAttendanceOpen(true)}
+                onClick={handleDeleteSession}
+                title="Delete"
+                className="athlete-view-btn"
               >
-                Attendance
+                <img
+                  src={deleteIcon}
+                  alt="Delete"
+                  className="athlete-view-icon"
+                />
               </button>
-              <button className="btn-danger" onClick={handleDeleteSession}>
-                Delete
-              </button>
-              <button className="btn-secondary" onClick={closeSessionDetails}>
-                Close
+              <button
+                onClick={closeSessionDetails}
+                title="Close"
+                className="athlete-view-btn"
+              >
+                <img
+                  src={closeIcon}
+                  alt="Close"
+                  className="athlete-view-icon"
+                />
               </button>
             </div>
             {attendanceOpen && selectedSession && (

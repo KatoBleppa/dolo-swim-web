@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient';
+import refreshIcon from './assets/icons/icons8-refresh-100.png';
 
 interface ProgressData {
   membersid: number;
@@ -180,9 +181,13 @@ const Progress: React.FC = () => {
         <button
           onClick={fetchProgressData}
           disabled={loading}
-          className={`btn ${loading ? 'btn-secondary' : 'btn-primary'}`}
+          className="athlete-view-btn"
         >
-          {loading ? 'Loading...' : 'Refresh Data'}
+                <img
+                  src={refreshIcon}
+                  alt="Delete"
+                  className="athlete-view-icon"
+                />
         </button>
       </div>
 

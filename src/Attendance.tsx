@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from './supabaseClient';
+import filterIcon from './assets/icons/icons8-filter-100.png';
 
 interface Athlete {
   fincode: number;
@@ -145,9 +146,13 @@ const AttendanceList: React.FC = () => {
         <button
           onClick={handleFilter}
           disabled={loading}
-          className={`btn ${loading ? 'btn-secondary' : 'btn-primary'}`}
+          className="athlete-view-btn"
         >
-          {loading ? 'Filtering...' : 'Filter'}
+                <img
+                  src={filterIcon}
+                  alt="Delete"
+                  className="athlete-view-icon"
+                />
         </button>
       </div>
       {error && <div className="error-message">{error}</div>}
@@ -182,23 +187,12 @@ const AttendanceList: React.FC = () => {
                 ) : (
                   athletes.map((ath, idx) => (
                     <tr key={ath.fincode || idx}>
-                      <td
-                        style={{
-                          padding: '8px',
-                          border: '1px solid #ddd',
-                          textAlign: 'center',
-                        }}
-                      >
+                      <td className="athlete-portrait-cell">
                         {ath.photo ? (
                           <img
                             src={ath.photo}
                             alt={ath.name ?? 'Athlete portrait'}
-                            style={{
-                              width: 50,
-                              height: 50,
-                              borderRadius: 25,
-                              objectFit: 'cover',
-                            }}
+                            className="athlete-avatar"
                             referrerPolicy="no-referrer"
                             onError={e => {
                               e.currentTarget.src =
@@ -209,61 +203,16 @@ const AttendanceList: React.FC = () => {
                           <img
                             src={`https://ui-avatars.com/api/?name=${encodeURIComponent(ath.name || 'Avatar')}&background=cccccc&color=ffffff&size=50`}
                             alt="Default avatar"
-                            style={{
-                              width: 50,
-                              height: 50,
-                              borderRadius: 25,
-                              objectFit: 'cover',
-                            }}
+                            className="athlete-avatar"
                           />
                         )}
                       </td>
-                      <td
-                        style={{
-                          padding: '8px',
-                          border: '1px solid #ddd',
-                          textAlign: 'center',
-                        }}
-                      >
-                        {ath.fincode}
-                      </td>
-                      <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                        {ath.name}
-                      </td>
-                      <td
-                        style={{
-                          padding: '8px',
-                          border: '1px solid #ddd',
-                          textAlign: 'center',
-                        }}
-                      >
-                        {ath.presenze}
-                      </td>
-                      <td
-                        style={{
-                          padding: '8px',
-                          border: '1px solid #ddd',
-                          textAlign: 'center',
-                        }}
-                      >
-                        {ath.giustificate}
-                      </td>
-                      <td
-                        style={{
-                          padding: '8px',
-                          border: '1px solid #ddd',
-                          textAlign: 'center',
-                        }}
-                      >
-                        {ath.total_sessions}
-                      </td>
-                      <td
-                        style={{
-                          padding: '8px',
-                          border: '1px solid #ddd',
-                          textAlign: 'center',
-                        }}
-                      >
+                      <td>{ath.fincode}</td>
+                      <td>{ath.name}</td>
+                      <td>{ath.presenze}</td>
+                      <td>{ath.giustificate}</td>
+                      <td>{ath.total_sessions}</td>
+                      <td>
                         {ath.percent != null
                           ? ath.percent.toFixed(1) + '%'
                           : ''}
@@ -276,7 +225,7 @@ const AttendanceList: React.FC = () => {
           </div>
 
           {athletes.length > 0 && (
-            <div style={{ marginTop: '20px', fontSize: '14px', color: '#666' }}>
+            <div className="attendance-summary">
               <p>Showing {athletes.length} athletes</p>
               <p>
                 <strong>Note:</strong> Attendance percentages are calculated

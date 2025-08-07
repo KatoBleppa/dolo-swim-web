@@ -619,6 +619,9 @@ body {
   border: 1px solid #ddd;
   border-radius: 8px;
   overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  table-layout: fixed;
 }
 
 .calendar-header {
@@ -630,7 +633,39 @@ body {
   font-weight: bold;
   border: 1px solid #ddd;
   text-align: center;
-  min-width: 50px;
+  width: 14.28%; /* 100% / 7 days */
+  min-width: 80px;
+}
+
+/* Responsive calendar headers */
+@media (max-width: 767px) {
+  .calendar-header th {
+    padding: 8px 4px;
+    font-size: 12px;
+    min-width: 60px;
+  }
+}
+
+/* Calendar table cells */
+.calendar-table td {
+  border: 1px solid #ccc;
+  vertical-align: top;
+  height: 80px;
+  width: 14.28% !important; /* Override inline styles */
+  min-width: 80px !important;
+  max-width: 14.28% !important;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+/* Responsive calendar cells */
+@media (max-width: 767px) {
+  .calendar-table td {
+    height: 60px;
+    min-width: 60px !important;
+    padding: 2px;
+    font-size: 12px;
+  }
 }
 
 .calendar-cell {
@@ -1631,6 +1666,13 @@ body {
 .athlete-field-name {
   font-weight: bold;
   text-transform: capitalize;
+}
+
+/* Attendance summary styles */
+.attendance-summary {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #666;
 }
 
 .athlete-no-selection {

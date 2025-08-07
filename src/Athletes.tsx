@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient';
 import eyeIcon from './assets/icons/icons8-eye-100.png';
+import closeIcon from './assets/icons/icons8-close-100.png';
 
 // This page lists all records from the 'athletes' table
 const ListAthletesPage = () => {
@@ -154,13 +155,6 @@ const ListAthletesPage = () => {
       {selectedAthlete && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <button
-              onClick={() => setSelectedAthlete(null)}
-              className="modal-close"
-            >
-              ✕
-            </button>
-
             <div className="athlete-modal-header">
               {selectedAthlete.photo ? (
                 <img
@@ -207,6 +201,19 @@ const ListAthletesPage = () => {
                   )}
                 </tbody>
               </table>
+            </div>
+            <div className="modal-buttons">
+              <button
+                onClick={() => setSelectedAthlete(null)}
+                title="Close"
+                className="athlete-view-btn"
+              >
+                <img
+                  src={closeIcon}
+                  alt="Close"
+                  className="athlete-view-icon"
+                />
+              </button>
             </div>
           </div>
         </div>
