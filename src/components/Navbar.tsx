@@ -8,14 +8,29 @@ const Navbar: React.FC = () => {
 
   const navItems = [
     { path: '/', label: 'Dashboard' },
-    { path: '/athletes', label: 'Athletes' },
-    { path: '/personalbests', label: 'Personal Bests' },
-    { path: '/trainings', label: 'Trainings' },
-    { path: '/trainingscal', label: 'Calendar' },
-    { path: '/attendance', label: 'Attendance' },
-    { path: '/trend', label: 'Trend' },
-    { path: '/results', label: 'Results' },
-    { path: '/progress', label: 'Progress' },
+    {
+      category: 'Athletes',
+      items: [
+        { path: '/athletes', label: 'Personal data' },
+        { path: '/personalbests', label: 'Personal bests' },
+      ],
+    },
+    {
+      category: 'Training',
+      items: [
+        { path: '/trainings', label: 'List' },
+        { path: '/trainingscal', label: 'Calendar' },
+        { path: '/attendance', label: 'Attendance' },
+        { path: '/trend', label: 'Trend' },
+      ],
+    },
+    {
+      category: 'Race',
+      items: [
+        { path: '/results', label: 'Results' },
+        { path: '/progress', label: 'Progress' },
+      ],
+    },
   ];
 
   const toggleMenu = () => {
@@ -31,7 +46,6 @@ const Navbar: React.FC = () => {
       <div className="navbar-container">
         {/* Logo */}
         <img src={sportProLogo} className="navbar-logo" alt="SportPro logo" />
-
         {/* Mobile menu button */}
         <button
           className="navbar-toggle"
@@ -42,22 +56,45 @@ const Navbar: React.FC = () => {
           <span className={`hamburger-line ${isMenuOpen ? 'open' : ''}`}></span>
           <span className={`hamburger-line ${isMenuOpen ? 'open' : ''}`}></span>
         </button>
-
         {/* Navigation menu */}
         <ul className={`navbar-menu ${isMenuOpen ? 'open' : ''}`}>
-          {navItems.map(item => (
-            <li key={item.path} className="navbar-item">
-              <Link
-                to={item.path}
-                className={`navbar-link ${location.pathname === item.path ? 'active' : ''}`}
-                onClick={closeMenu} // Close menu when link is clicked
-              >
-                {item.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
+          {navItems.map((item, index) => {
+            // Handle Dashboard (simple item)
+            if (item.path) {
+              return (
+                <li key={item.path} className="navbar-item">
+                  <Link
+                    to={item.path}
+                    className={`navbar-link ${location.pathname === item.path ? 'active' : ''}`}
+                    onClick={closeMenu}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              );
+            }
 
+            // Handle dropdown categories
+            return (
+              <li key={index} className="navbar-item navbar-dropdown">
+                <span className="navbar-dropdown-trigger">{item.category}</span>
+                <ul className="navbar-dropdown-menu">
+                  {item.items?.map(subItem => (
+                    <li key={subItem.path} className="navbar-dropdown-item">
+                      <Link
+                        to={subItem.path}
+                        className={`navbar-dropdown-link ${location.pathname === subItem.path ? 'active' : ''}`}
+                        onClick={closeMenu}
+                      >
+                        {subItem.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            );
+          })}
+        </ul>{' '}
         {/* Overlay for mobile menu */}
         {isMenuOpen && (
           <div className="navbar-overlay" onClick={closeMenu}></div>
