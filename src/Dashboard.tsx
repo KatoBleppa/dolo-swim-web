@@ -1,13 +1,260 @@
-import './Dashboard.css';
-import { icons } from './assets/icons/icons.ts';
-import { Link } from 'react-router-dom';
+import './styles/Dashboard.css';
+import { useState, useEffect } from 'react';
+import { supabase } from './supabaseClient';
+
+interface Meet {
+  mindate: string;
+  maxdate: string;
+  name: string;
+  place: string;
+  course: number;
+  groups: string[];
+}
+
+interface Session {
+  date: string;
+  starttime: string;
+  type: string;
+  groups: string;
+}
+
+interface SeasonSummary {
+  season: string;
+  totalKm: number;
+  totalSessions: number;
+  averageKm: number;
+  eventCount: number;
+}
 
 const Dashboard = () => {
+  const [nextEvents, setNextEvents] = useState<Meet[]>([]);
+  const [nextWorkouts, setNextWorkouts] = useState<Session[]>([]);
+  const [seasonSummaries, setSeasonSummaries] = useState<SeasonSummary[]>([]);
+  const [seasonFilter, setSeasonFilter] = useState<string>('ASS');
+  const [loading, setLoading] = useState(true);
+  const [workoutLoading, setWorkoutLoading] = useState(true);
+  const [seasonLoading, setSeasonLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [workoutError, setWorkoutError] = useState<string | null>(null);
+  const [seasonError, setSeasonError] = useState<string | null>(null);
+
+  // Helper function to format date as dd.mm.yyyy
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}.${month}.${year}`;
+  };
+
+  useEffect(() => {
+    const fetchNextEvents = async () => {
+      try {
+        setLoading(true);
+        const today = new Date().toISOString().split('T')[0];
+
+        const { data, error } = await supabase
+          .from('meets_teammanager')
+          .select('mindate, maxdate, name, place, course, groups')
+          .gte('mindate', today)
+          .order('mindate', { ascending: true })
+          .limit(2);
+
+        if (error) {
+          setError(error.message);
+        } else {
+          setNextEvents(data || []);
+        }
+      } catch (err: any) {
+        setError(err.message || 'An error occurred');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchNextWorkouts = async () => {
+      try {
+        setWorkoutLoading(true);
+        const today = new Date().toISOString().split('T')[0];
+
+        const { data, error } = await supabase
+          .from('sessions')
+          .select('date, starttime, type, groups')
+          .gte('date', today)
+          .order('date', { ascending: true })
+          .order('starttime', { ascending: true })
+          .limit(2);
+
+        if (error) {
+          setWorkoutError(error.message);
+        } else {
+          setNextWorkouts(data || []);
+        }
+      } catch (err: any) {
+        setWorkoutError(err.message || 'An error occurred');
+      } finally {
+        setWorkoutLoading(false);
+      }
+    };
+
+    const fetchSeasonSummaries = async () => {
+      try {
+        setSeasonLoading(true);
+        const summaries: SeasonSummary[] = [];
+
+        // First, get the latest date from sessions table to determine which seasons to include
+        const { data: latestSessionData, error: latestSessionError } =
+          await supabase
+            .from('sessions')
+            .select('date')
+            .order('date', { ascending: false })
+            .limit(1);
+
+        if (latestSessionError) {
+          console.error('Error fetching latest session:', latestSessionError);
+          setSeasonError('Error fetching latest session data');
+          return;
+        }
+
+        if (!latestSessionData || latestSessionData.length === 0) {
+          console.log('No sessions found in database');
+          setSeasonSummaries([]);
+          return;
+        }
+
+        const latestDate = latestSessionData[0].date;
+        console.log(`Latest session date: ${latestDate}`);
+
+        // Parse the latest date to determine the latest season to include
+        const latestDateObj = new Date(latestDate);
+        const latestYear = latestDateObj.getFullYear();
+        const latestMonth = latestDateObj.getMonth() + 1; // getMonth() is 0-indexed
+
+        // Determine the latest season to include based on the latest session date
+        let endYear: number;
+        if (latestMonth >= 9) {
+          // If latest session is in September or later, include that season (e.g., Sept 2024 -> include 2024/2025 season)
+          endYear = latestYear;
+        } else {
+          // If latest session is before September, include the previous season (e.g., Aug 2024 -> include 2023/2024 season)
+          endYear = latestYear - 1;
+        }
+
+        console.log(
+          `Latest session: ${latestDate} (Year: ${latestYear}, Month: ${latestMonth})`
+        );
+        console.log(`End year for seasons: ${endYear}`);
+
+        // Generate seasons starting from 2023-09-01 up to the determined end year
+        for (let year = 2023; year <= endYear; year++) {
+          const seasonStart = `${year}-09-01`;
+          const seasonEnd = `${year + 1}-08-31`;
+          const seasonLabel = `${year}/${year + 1}`;
+
+          console.log(
+            `Processing season ${seasonLabel}: ${seasonStart} to ${seasonEnd}`
+          );
+
+          // Fetch total volume from sessions
+          const { data: volumeData, error: volumeError } = await supabase
+            .from('sessions')
+            .select('volume')
+            .eq('groups', seasonFilter)
+            .gte('date', seasonStart)
+            .lte('date', seasonEnd);
+
+          if (volumeError) {
+            console.error(
+              `Error fetching volume for ${seasonLabel}:`,
+              volumeError
+            );
+            continue;
+          }
+
+          // Fetch swim sessions count separately
+          const { data: swimSessionsData, error: swimSessionsError } =
+            await supabase
+              .from('sessions')
+              .select('session_id', { count: 'exact' })
+              .eq('type', 'Swim')
+              .eq('groups', seasonFilter)
+              .gte('date', seasonStart)
+              .lte('date', seasonEnd);
+
+          if (swimSessionsError) {
+            console.error(
+              `Error fetching swim sessions for ${seasonLabel}:`,
+              swimSessionsError
+            );
+            continue;
+          }
+
+          console.log(`Volume data for ${seasonLabel}:`, volumeData);
+          console.log(
+            `Swim sessions data for ${seasonLabel}:`,
+            swimSessionsData
+          );
+
+          const totalKm =
+            (volumeData?.reduce(
+              (sum, session) => sum + (session.volume || 0),
+              0
+            ) || 0) / 1000; // Convert from meters to kilometers
+
+          const totalSessions = swimSessionsData?.length || 0;
+          const averageKm = totalSessions > 0 ? totalKm / totalSessions : 0;
+
+          // Fetch event count from meets_teammanager
+          const { data: eventsData, error: eventsError } = await supabase
+            .from('meets_teammanager')
+            .select('meetsid', { count: 'exact' })
+            .contains('groups', [seasonFilter])
+            .gte('mindate', seasonStart)
+            .lte('maxdate', seasonEnd);
+
+          if (eventsError) {
+            console.error(
+              `Error fetching events for ${seasonLabel}:`,
+              eventsError
+            );
+            continue;
+          }
+
+          console.log(`Events data for ${seasonLabel}:`, eventsData);
+
+          const eventCount = eventsData?.length || 0;
+
+          summaries.push({
+            season: seasonLabel,
+            totalKm: totalKm,
+            totalSessions: totalSessions,
+            averageKm: averageKm,
+            eventCount: eventCount,
+          });
+
+          console.log(
+            `Added summary for ${seasonLabel}: ${totalKm} km, ${totalSessions} sessions, ${averageKm.toFixed(1)} avg km, ${eventCount} events`
+          );
+        }
+
+        console.log(`Final summaries:`, summaries);
+        setSeasonSummaries(summaries);
+      } catch (err: any) {
+        console.error('Season summary error:', err);
+        setSeasonError(err.message || 'An error occurred');
+      } finally {
+        setSeasonLoading(false);
+      }
+    };
+
+    fetchNextEvents();
+    fetchNextWorkouts();
+    fetchSeasonSummaries();
+  }, [seasonFilter]);
   return (
     <div className="dashboard-container">
       <h1>Dashboard</h1>
       <div className="dashboard-links">
-        {/* ----------------- athletes -----------------*/}
         <div
           style={{
             display: 'flex',
@@ -15,252 +262,199 @@ const Dashboard = () => {
             justifyContent: 'center',
             background: 'linear-gradient(to right, #e0e0e0, #f5f5f5)',
             borderRadius: '8px',
+            marginBottom: '1rem',
+            padding: '1rem',
           }}
         >
           <div
             style={{
               display: 'flex',
-              gap: '2rem',
-              justifyContent: 'center',
+              flexDirection: 'column',
+              alignItems: 'center',
+              width: '100%',
             }}
           >
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-              }}
-            >
-              <Link
-                to="/athletes"
-                title="Athlete profile"
-                className="dashboard-icon"
+            <h2>Next Events</h2>
+            {loading ? (
+              <p>Loading events...</p>
+            ) : error ? (
+              <p style={{ color: 'red' }}>Error: {error}</p>
+            ) : nextEvents.length === 0 ? (
+              <p>No upcoming events found.</p>
+            ) : (
+              <div
+                className="table-container"
+                style={{ width: '100%', maxWidth: '600px' }}
               >
-                <img
-                  src={icons.person}
-                  alt="Athlete profile"
-                  style={{ width: '100px', height: '100px' }}
-                />
-              </Link>
-              <h2>Athletes</h2>
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-              }}
-            >
-              <Link
-                to="/personalbests"
-                title="Personal Bests"
-                className="dashboard-icon"
-              >
-                <img
-                  src={icons.personalbest}
-                  alt="Personal Bests"
-                  style={{ width: '100px', height: '100px' }}
-                />
-              </Link>
-              <h2>Personal Bests</h2>
-            </div>
+                <table className="table">
+                  <thead className="table-header">
+                    <tr>
+                      <th>Start Date</th>
+                      <th>End Date</th>
+                      <th>Event Name</th>
+                      <th>Location</th>
+                      <th>Course</th>
+                      <th>Groups</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {nextEvents.map((event, index) => (
+                      <tr key={index}>
+                        <td>{formatDate(event.mindate)}</td>
+                        <td>{formatDate(event.maxdate)}</td>
+                        <td>{event.name}</td>
+                        <td>{event.place}</td>
+                        <td>
+                          {event.course === 1
+                            ? '50m'
+                            : event.course === 2
+                              ? '25m'
+                              : event.course}
+                        </td>
+                        <td>{event.groups ? event.groups.join(', ') : ''}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
-        {/* ----------------- trainings ----------------*/}
+      </div>
+      <div className="dashboard-links">
         <div
           style={{
             display: 'flex',
             gap: '2rem',
             justifyContent: 'center',
-            background: 'linear-gradient(to right, #d5d5d5, #ececec)',
+            background: 'linear-gradient(to right, #e0e0e0, #f5f5f5)',
             borderRadius: '8px',
+            marginBottom: '1rem',
+            padding: '1rem',
           }}
         >
           <div
             style={{
               display: 'flex',
-              gap: '2rem',
-              justifyContent: 'center',
+              flexDirection: 'column',
+              alignItems: 'center',
+              width: '100%',
             }}
           >
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-              }}
-            >
-              <Link
-                to="/trainings"
-                title="Training list"
-                className="dashboard-icon"
+            <h2>Next Workouts</h2>
+            {workoutLoading ? (
+              <p>Loading workouts...</p>
+            ) : workoutError ? (
+              <p style={{ color: 'red' }}>Error: {workoutError}</p>
+            ) : nextWorkouts.length === 0 ? (
+              <p>No upcoming workouts found.</p>
+            ) : (
+              <div
+                className="table-container"
+                style={{ width: '100%', maxWidth: '600px' }}
               >
-                <img
-                  src={icons.list}
-                  alt="Trainings list"
-                  style={{ width: '100px', height: '100px' }}
-                />
-              </Link>
-              <h2>List</h2>
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-              }}
-            >
-              <Link
-                to="/trainingscal"
-                title="Training calendar"
-                className="dashboard-icon"
-              >
-                <img
-                  src={icons.calendar}
-                  alt="Trainings calendar"
-                  style={{ width: '100px', height: '100px' }}
-                />
-              </Link>
-              <h2>Calendar</h2>
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-              }}
-            >
-              <Link
-                to="/individualcal"
-                title="Individual training calendar"
-                className="dashboard-icon"
-              >
-                <img
-                  src={icons.transfer}
-                  alt="Individual training calendar"
-                  style={{ width: '100px', height: '100px' }}
-                />
-              </Link>
-              <h2>Individual</h2>
-            </div>
+                <table className="table">
+                  <thead className="table-header">
+                    <tr>
+                      <th>Date</th>
+                      <th>Start Time</th>
+                      <th>Type</th>
+                      <th>Groups</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {nextWorkouts.map((workout, index) => (
+                      <tr key={index}>
+                        <td>{formatDate(workout.date)}</td>
+                        <td>{workout.starttime.substring(0, 5)}</td>
+                        <td>{workout.type}</td>
+                        <td>{workout.groups}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
-        {/* ----------------- attendance ---------------*/}
+      </div>
+      <div className="dashboard-links">
         <div
           style={{
             display: 'flex',
             gap: '2rem',
             justifyContent: 'center',
-            background: 'linear-gradient(to right, #c8c8c8, #e0e0e0)',
+            background: 'linear-gradient(to right, #e0e0e0, #f5f5f5)',
             borderRadius: '8px',
+            marginBottom: '1rem',
+            padding: '1rem',
           }}
         >
           <div
             style={{
               display: 'flex',
-              gap: '2rem',
-              justifyContent: 'center',
+              flexDirection: 'column',
+              alignItems: 'center',
+              width: '100%',
             }}
           >
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-              }}
-            >
-              <Link
-                to="/attendance"
-                title="Attendance summary"
-                className="dashboard-icon"
+            <h2>Season Summaries</h2>
+            <div style={{ marginBottom: '1rem' }}>
+              <label htmlFor="season-filter" style={{ marginRight: '0.5rem' }}>
+                Filter by Group:
+              </label>
+              <select
+                id="season-filter"
+                value={seasonFilter}
+                onChange={e => setSeasonFilter(e.target.value)}
+                style={{
+                  padding: '0.25rem 0.5rem',
+                  borderRadius: '4px',
+                  border: '1px solid #ccc',
+                  fontSize: '14px',
+                }}
               >
-                <img
-                  src={icons.positive}
-                  alt="Attendance"
-                  style={{ width: '100px', height: '100px' }}
-                />
-              </Link>
-              <h2>Attendance</h2>
+                <option value="ASS">ASS</option>
+                <option value="EA">EA</option>
+                <option value="EB">EB</option>
+                <option value="PROP">PROP</option>
+              </select>
             </div>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-              }}
-            >
-              <Link to="/trend" title="Trend" className="dashboard-icon">
-                <img
-                  src={icons.graph}
-                  alt="Trend"
-                  style={{ width: '100px', height: '100px' }}
-                />
-              </Link>
-              <h2>Trend</h2>
-            </div>
-          </div>
-        </div>
-        {/* ----------------- Results -----------------*/}
-        <div
-          style={{
-            display: 'flex',
-            gap: '2rem',
-            justifyContent: 'center',
-            background: 'linear-gradient(to right, #bbbbbb, #d4d4d4)',
-            borderRadius: '8px',
-          }}
-        >
-          <div
-            style={{ display: 'flex', gap: '2rem', justifyContent: 'center' }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-              }}
-            >
-              <Link to="/results" title="Results" className="dashboard-icon">
-                <img
-                  src={icons.trophy}
-                  alt="Results"
-                  style={{ width: '100px', height: '100px' }}
-                />
-              </Link>
-              <h2>Results</h2>
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-              }}
-            >
-              <Link to="/progress" title="Progress" className="dashboard-icon">
-                <img
-                  src={icons.tasks}
-                  alt="Progress"
-                  style={{ width: '100px', height: '100px' }}
-                />
-              </Link>
-              <h2>Progress</h2>
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-              }}
-            >
-              <Link to="/tools" title="Tools" className="dashboard-icon">
-                <img
-                  src={icons.settings}
-                  alt="Tools"
-                  style={{ width: '100px', height: '100px' }}
-                />
-              </Link>
-              <h2>Tools</h2>
-            </div>
+            {seasonLoading ? (
+              <p>Loading season summaries...</p>
+            ) : seasonError ? (
+              <p style={{ color: 'red' }}>Error: {seasonError}</p>
+            ) : seasonSummaries.length === 0 ? (
+              <p>No season data found.</p>
+            ) : (
+              <div
+                className="table-container"
+                style={{ width: '100%', maxWidth: '600px' }}
+              >
+                <table className="table">
+                  <thead className="table-header">
+                    <tr>
+                      <th>Season</th>
+                      <th>Total KM</th>
+                      <th>Total Sessions</th>
+                      <th>Average KM</th>
+                      <th>Events Count</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {seasonSummaries.map((summary, index) => (
+                      <tr key={index}>
+                        <td>{summary.season}</td>
+                        <td>{summary.totalKm.toFixed(1)} km</td>
+                        <td>{summary.totalSessions}</td>
+                        <td>{summary.averageKm.toFixed(1)} km</td>
+                        <td>{summary.eventCount}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -3,18 +3,28 @@ import { supabase } from './supabaseClient';
 import eyeIcon from './assets/icons/icons8-eye-100.png';
 import closeIcon from './assets/icons/icons8-close-100.png';
 
+// Interface for season data
+interface Season {
+  seasonid: number;
+  description: string;
+  seasonstart: string;
+  seasonend: string;
+}
+
 // This page lists all records from the 'athletes' table
 const ListAthletesPage = () => {
   const [athletes, setAthletes] = useState<any[]>([]);
   const [filteredAthletes, setFilteredAthletes] = useState<any[]>([]);
+  const [seasons, setSeasons] = useState<Season[]>([]);
+  const [selectedSeason, setSelectedSeason] = useState<string>('');
   const [selectedGroup, setSelectedGroup] = useState<string>(''); // Changed from 'ALL' to empty string
   const [loading, setLoading] = useState(true);
+  const [seasonsLoading, setSeasonsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedAthlete, setSelectedAthlete] = useState<any | null>(null);
 
   const groupOptions = [
     { label: 'Select a group...', value: '' }, // Added default option
-    { label: 'All Groups', value: 'ALL' },
     { label: 'ASS', value: 'ASS' },
     { label: 'EA', value: 'EA' },
     { label: 'EB', value: 'EB' },
@@ -22,49 +32,88 @@ const ListAthletesPage = () => {
   ];
 
   useEffect(() => {
-    const fetchAthletes = async () => {
-      setLoading(true);
-      setError(null);
-      const { data, error } = await supabase.from('athletes').select('*');
+    // Fetch seasons from the database
+    const fetchSeasons = async () => {
+      setSeasonsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('_seasons')
+          .select('*')
+          .order('seasonid', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching seasons:', error);
+        } else {
+          setSeasons(data || []);
+        }
+      } catch (err) {
+        console.error('Error fetching seasons:', err);
+      }
+      setSeasonsLoading(false);
+    };
+
+    fetchSeasons();
+  }, []);
+
+  // Fetch athletes when season or group changes
+  useEffect(() => {
+    if (selectedSeason && selectedGroup && selectedGroup !== '') {
+      fetchAthletesForSeasonAndGroup(selectedSeason, selectedGroup);
+    } else {
+      setAthletes([]);
+      setFilteredAthletes([]);
+      setLoading(false);
+    }
+  }, [selectedSeason, selectedGroup]);
+
+  const fetchAthletesForSeasonAndGroup = async (
+    season: string,
+    group: string
+  ) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Call the database function get_athletes_with_rosters with both parameters
+      console.log('Calling function with:', { season, group }); // Debug log
+      const { data, error } = await supabase.rpc('get_athletes_with_rosters', {
+        paramseason: season,
+        paramgroups: group,
+      });
+
+      console.log('Function response:', { data, error }); // Debug log
+
       if (error) {
+        console.error('Database error:', error);
         setError(error.message);
         setAthletes([]);
         setFilteredAthletes([]);
       } else {
+        console.log('Raw data received:', data); // Debug log
         const processed = (data || []).map((item: any) => {
           return item;
         });
 
+        console.log('Processed data:', processed); // Debug log
+
         // Sort athletes by name alphabetically
-        const sortedAthletes = processed.sort((a, b) => {
+        const sortedAthletes = processed.sort((a: any, b: any) => {
           if (a.name < b.name) return -1;
           if (a.name > b.name) return 1;
           return 0;
         });
 
+        console.log('Sorted athletes:', sortedAthletes); // Debug log
         setAthletes(sortedAthletes);
-        // Don't apply initial filtering - wait for user selection
-        setFilteredAthletes([]); // Start with empty filtered list
+        // Since filtering is now done by the database function, set filtered athletes directly
+        setFilteredAthletes(sortedAthletes);
       }
-      setLoading(false);
-    };
-    fetchAthletes();
-  }, []);
-
-  // Filter athletes when group selection changes
-  useEffect(() => {
-    filterAthletes(athletes, selectedGroup);
-  }, [selectedGroup, athletes]);
-
-  const filterAthletes = (athleteList: any[], group: string) => {
-    if (group === '' || group === null || group === undefined) {
-      setFilteredAthletes([]); // Show nothing when no group is selected
-    } else if (group === 'ALL') {
-      setFilteredAthletes(athleteList);
-    } else {
-      const filtered = athleteList.filter(athlete => athlete.groups === group);
-      setFilteredAthletes(filtered);
+    } catch (err) {
+      setError('Error fetching athletes for selected season and group');
+      setAthletes([]);
+      setFilteredAthletes([]);
     }
+    setLoading(false);
   };
 
   return (
@@ -72,6 +121,26 @@ const ListAthletesPage = () => {
       <h2>Athletes</h2>
 
       <div className="athletes-filter-section">
+        <div>
+          <label htmlFor="season-select" className="form-label">
+            Season:
+          </label>
+          <select
+            id="season-select"
+            value={selectedSeason}
+            onChange={e => setSelectedSeason(e.target.value)}
+            className="form-select"
+            disabled={seasonsLoading}
+          >
+            <option value="">Select a season...</option>
+            {seasons.map(season => (
+              <option key={season.seasonid} value={season.description}>
+                {season.description}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div>
           <label htmlFor="group-select" className="form-label">
             Group:
@@ -81,22 +150,23 @@ const ListAthletesPage = () => {
             value={selectedGroup}
             onChange={e => setSelectedGroup(e.target.value)}
             className="form-select"
+            disabled={!selectedSeason || loading}
           >
-            {groupOptions
-              .filter(option => option.value !== 'ALL')
-              .map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
+            {groupOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </div>
       </div>
 
-      {loading && <p>Loading...</p>}
+      {seasonsLoading && <p>Loading seasons...</p>}
+      {loading && selectedSeason && <p>Loading athletes...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {!loading &&
         !error &&
+        selectedSeason &&
         selectedGroup !== '' &&
         filteredAthletes.length > 0 && (
           <div className="table-container">
@@ -220,15 +290,30 @@ const ListAthletesPage = () => {
       )}
       {!loading &&
         !error &&
+        selectedSeason &&
         selectedGroup !== '' &&
         filteredAthletes.length === 0 &&
         athletes.length > 0 && <p>No athletes found for the selected group.</p>}
-      {!loading && !error && selectedGroup === '' && athletes.length > 0 && (
+      {!loading && !error && selectedSeason === '' && (
+        <p className="athlete-no-selection">
+          Please select a season from the dropdown to view athletes.
+        </p>
+      )}
+      {!loading && !error && selectedSeason && selectedGroup === '' && (
         <p className="athlete-no-selection">
           Please select a group from the dropdown to view athletes.
         </p>
       )}
-      {!loading && !error && athletes.length === 0 && <p>No records found.</p>}
+      {!loading &&
+        !error &&
+        selectedSeason &&
+        selectedGroup &&
+        selectedGroup !== '' &&
+        filteredAthletes.length === 0 && (
+          <p>
+            No athletes found for the selected season and group combination.
+          </p>
+        )}
     </div>
   );
 };

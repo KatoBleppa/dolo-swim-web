@@ -49,41 +49,76 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch athletes for the group(s)
-        let { data: athletes, error: athletesError } = await supabase
-          .from('athletes')
-          .select('fincode, name, photo, groups');
-        if (athletesError) throw athletesError;
-        let filtered = athletes || [];
-        if (sessionGroups && sessionGroups.trim() !== '') {
-          const groupList = sessionGroups
-            .split(',')
-            .map(g => g.trim().toUpperCase());
-          filtered = filtered.filter((athlete: Athlete) => {
-            if (!athlete.groups) return false;
-            const athleteGroups = athlete.groups
-              .split(',')
-              .map((t: string) => t.trim().toUpperCase());
-            return groupList.some(g => athleteGroups.includes(g));
-          });
+        // First, get the session date to determine the season
+        const { data: sessionData, error: sessionError } = await supabase
+          .from('sessions')
+          .select('date')
+          .eq('session_id', sessionId)
+          .single();
+
+        if (sessionError) throw sessionError;
+
+        const sessionDate = sessionData.date;
+
+        // Find the season that contains this session date
+        const { data: seasonsData, error: seasonsError } = await supabase
+          .from('_seasons')
+          .select('description, seasonstart, seasonend')
+          .lte('seasonstart', sessionDate)
+          .gte('seasonend', sessionDate)
+          .single();
+
+        if (seasonsError) {
+          console.error('Season lookup error:', seasonsError);
+          throw new Error(
+            'Could not determine season for session date: ' + sessionDate
+          );
         }
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
+
+        const seasonDescription = seasonsData.description;
+        console.log(
+          'Found season:',
+          seasonDescription,
+          'for date:',
+          sessionDate
+        );
+
+        // Use the get_athletes_with_rosters function with season and groups
+        const { data: athletesData, error: athletesError } = await supabase.rpc(
+          'get_athletes_with_rosters',
+          {
+            paramseason: seasonDescription,
+            paramgroups: sessionGroups,
+          }
+        );
+
+        if (athletesError) throw athletesError;
+
+        const athletes = athletesData || [];
+        console.log('Athletes from function:', athletes);
+
+        // Sort athletes by name
+        athletes.sort((a: Athlete, b: Athlete) => a.name.localeCompare(b.name));
+
         // Fetch attendance for the session
         const { data: attendanceData, error: attendanceError } = await supabase
           .from('attendance')
           .select('fincode, status')
           .eq('session_id', sessionId);
         if (attendanceError) throw attendanceError;
+
         // Merge attendance status into athletes
-        const merged = filtered.map(athlete => {
+        const merged = athletes.map((athlete: Athlete) => {
           const attendance = attendanceData?.find(
             a => a.fincode === athlete.fincode
           );
           return { ...athlete, status: attendance ? attendance.status : 'N' };
         });
+
         setAthletes(merged);
       } catch (err) {
         console.error('Failed to fetch athletes or attendance:', err);
+        alert('Error: ' + (err as Error).message);
       }
       setLoading(false);
     };
