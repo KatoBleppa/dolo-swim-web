@@ -11,25 +11,37 @@ interface AttendanceData {
   attendance_percentage: number;
 }
 
-const SEASON_START = '2024-09';
-const SEASON_END = '2025-08';
-
-function getSeasonMonths(start: string, end: string) {
+function getSeasonMonths(season: string) {
   const result: string[] = [];
-  let current = new Date(start + '-01');
-  const endDate = new Date(end + '-01');
-  while (current <= endDate) {
-    const y = current.getFullYear();
-    const m = (current.getMonth() + 1).toString().padStart(2, '0');
-    result.push(`${y}-${m}`);
-    current.setMonth(current.getMonth() + 1);
+  const [startYear, endYear] = season.split('-');
+
+  // Generate months from September of start year to August of end year
+  // For '2024-25': Sep 2024 to Aug 2025
+  const startYearNum = parseInt(startYear);
+  const endYearNum = parseInt('20' + endYear); // Convert '25' to '2025'
+
+  // September to December of start year
+  for (let month = 9; month <= 12; month++) {
+    const monthStr = month.toString().padStart(2, '0');
+    result.push(`${startYearNum}-${monthStr}`);
   }
+
+  // January to August of end year
+  for (let month = 1; month <= 8; month++) {
+    const monthStr = month.toString().padStart(2, '0');
+    result.push(`${endYearNum}-${monthStr}`);
+  }
+
   return result;
 }
 
-const months = getSeasonMonths(SEASON_START, SEASON_END);
+function getSeasonDisplayText(season: string) {
+  const [startYear, endYear] = season.split('-');
+  return `Sep ${startYear} – Aug 20${endYear}`;
+}
 
 const TrendPage: React.FC = () => {
+  const [season, setSeason] = useState<string>('2025-26');
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [selectedFincode, setSelectedFincode] = useState<'all' | number>('all');
   const [selectedType, setSelectedType] = useState<'Swim' | 'Gym'>('Swim');
@@ -40,24 +52,39 @@ const TrendPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const months = getSeasonMonths(season);
+
+  console.log('Generated months for chart:', months);
+  console.log('Current season:', season);
+
   useEffect(() => {
     const fetchAthletes = async () => {
-      let query = supabase
-        .from('athletes')
-        .select('fincode, name, groups')
-        .order('name', { ascending: true });
-      if (selectedGroup !== 'all') {
-        query = query.eq('groups', selectedGroup);
+      if (selectedGroup === 'all') {
+        setAthletes([]);
+        return;
       }
-      const { data, error } = await query;
-      if (error) {
-        setError(error.message);
-      } else {
-        setAthletes(data || []);
+
+      try {
+        const { data, error } = await supabase.rpc(
+          'get_athletes_with_rosters',
+          {
+            paramseason: season,
+            paramgroups: selectedGroup,
+          }
+        );
+
+        if (error) {
+          setError(error.message);
+        } else {
+          setAthletes(data || []);
+        }
+      } catch (err: any) {
+        setError(err.message || 'Unknown error');
       }
     };
+
     fetchAthletes();
-  }, [selectedGroup]);
+  }, [selectedGroup, season]);
 
   useEffect(() => {
     const fetchAttendanceData = async () => {
@@ -70,38 +97,67 @@ const TrendPage: React.FC = () => {
         return;
       }
 
+      console.log('Calling get_monthly_attendance_percentage with:', {
+        fincode_input: selectedFincode,
+        season_input: season,
+        session_type_input: selectedType,
+      });
+
       const { data, error } = await supabase.rpc(
         'get_monthly_attendance_percentage',
         {
           fincode_input: selectedFincode,
+          season_input: season,
           session_type_input: selectedType,
         }
       );
 
+      console.log('Function returned:', { data, error });
+
       if (error) {
+        console.error('Function error:', error);
         setError(error.message);
         setChartData([]);
       } else {
+        console.log('Setting chart data:', data);
         setChartData(data || []);
       }
       setLoading(false);
     };
 
     fetchAttendanceData();
-  }, [selectedFincode, selectedType]);
+  }, [selectedFincode, selectedType, season]);
 
-  // Add top padding so bars never reach the top
+  // Chart dimensions for line chart
   const chartTopPadding = 24; // px
   const chartHeight = 220;
-  const barWidth = 32;
-  const barGap = 16;
-  const chartWidth = months.length * (barWidth + barGap);
+  const pointSpacing = 60;
+  const chartPadding = 40;
+  const chartWidth = Math.max(
+    600,
+    (months.length - 1) * pointSpacing + 2 * chartPadding
+  );
 
   return (
     <div className="page-container">
       <h1 className="page-title">Attendance Trend</h1>
-      <h2 className="text-center mb-4">Sep 2024 – Aug 2025</h2>
+      <h2 className="text-center mb-4">{getSeasonDisplayText(season)}</h2>
       <div className="form-group">
+        <div>
+          <label htmlFor="season-select" className="form-label">
+            Season:
+          </label>
+          <select
+            id="season-select"
+            value={season}
+            onChange={e => setSeason(e.target.value)}
+            className="form-select ml-1"
+          >
+            <option value="2023-24">2023-24</option>
+            <option value="2024-25">2024-25</option>
+            <option value="2025-26">2025-26</option>
+          </select>
+        </div>
         <div>
           <label htmlFor="group-select" className="form-label">
             Group:
@@ -200,29 +256,58 @@ const TrendPage: React.FC = () => {
                 </text>
               </g>
             ))}
-            {/* Bars */}
+            {/* Line chart */}
             {months.map((m, i) => {
               const data = chartData.find(cd => cd.month === m);
               const val = data?.attendance_percentage || 0;
-              const barColor = val >= 80 ? '#4caf50' : '#f44336'; // green/red logic
+              const pointColor = val >= 80 ? '#4caf50' : '#f44336'; // green/red logic
 
-              // Bar never reaches the top: max bar height is chartHeight - 12px
-              const barMaxHeight = chartHeight - 12;
-              const barActualHeight = (val / 100) * barMaxHeight;
-              const barY = chartTopPadding + chartHeight - barActualHeight;
+              const x = chartPadding + i * pointSpacing;
+              const y =
+                chartTopPadding +
+                chartHeight -
+                (val / 100) * (chartHeight - 12);
 
               return (
                 <g key={m}>
-                  <rect
-                    x={i * (barWidth + barGap) + 32}
-                    y={barY}
-                    width={barWidth}
-                    height={barActualHeight}
-                    fill={barColor}
-                    rx={6}
+                  {/* Data point circle */}
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r={4}
+                    fill={pointColor}
+                    stroke="white"
+                    strokeWidth={2}
                   />
+
+                  {/* Line to next point */}
+                  {i < months.length - 1 &&
+                    (() => {
+                      const nextData = chartData.find(
+                        cd => cd.month === months[i + 1]
+                      );
+                      const nextVal = nextData?.attendance_percentage || 0;
+                      const nextX = chartPadding + (i + 1) * pointSpacing;
+                      const nextY =
+                        chartTopPadding +
+                        chartHeight -
+                        (nextVal / 100) * (chartHeight - 12);
+
+                      return (
+                        <line
+                          x1={x}
+                          y1={y}
+                          x2={nextX}
+                          y2={nextY}
+                          stroke="#666"
+                          strokeWidth={2}
+                        />
+                      );
+                    })()}
+
+                  {/* Month label */}
                   <text
-                    x={i * (barWidth + barGap) + 32 + barWidth / 2}
+                    x={x}
                     y={chartTopPadding + chartHeight + 16}
                     fontSize={12}
                     textAnchor="middle"
@@ -230,14 +315,16 @@ const TrendPage: React.FC = () => {
                   >
                     {m.slice(5)}
                   </text>
-                  {/* Value label above bar with space above the bar and above the number */}
+
+                  {/* Value label above point */}
                   {val > 0 && (
                     <text
-                      x={i * (barWidth + barGap) + 32 + barWidth / 2}
-                      y={barY - 8}
+                      x={x}
+                      y={y - 8}
                       fontSize={12}
                       textAnchor="middle"
                       fill="#333"
+                      fontWeight="bold"
                     >
                       {`${val}%`}
                     </text>
@@ -259,8 +346,8 @@ const TrendPage: React.FC = () => {
             in <strong>{selectedType}</strong> sessions
           </p>
           <p>
-            <strong>Note:</strong> Green bars indicate attendance ≥80%, red bars
-            indicate attendance &lt;80%
+            <strong>Note:</strong> Green points indicate attendance ≥80%, red
+            points indicate attendance &lt;80%
           </p>
         </div>
       )}

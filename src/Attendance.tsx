@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from './supabaseClient';
 import filterIcon from './assets/icons/icons8-filter-100.png';
+import * as XLSX from 'xlsx';
 
 interface Athlete {
   fincode: number;
@@ -15,48 +16,85 @@ interface Athlete {
 const AttendanceList: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [period, setPeriod] = useState<string>('season');
-  const [customStart, setCustomStart] = useState<string>('');
-  const [customEnd, setCustomEnd] = useState<string>('');
+  const [season, setSeason] = useState<string>('2025-26');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [athleteGroupFilter, setAthleteGroupFilter] = useState<string>('all');
 
-  // Fetch attendance summary using the riepilogo_presenze function
+  // Export to Excel function
+  const exportToExcel = () => {
+    if (athletes.length === 0) {
+      alert('No data to export. Please run a filter first.');
+      return;
+    }
+
+    // Prepare data for export
+    const exportData = athletes.map((athlete, index) => ({
+      '#': index + 1,
+      Fincode: athlete.fincode,
+      Name: athlete.name,
+      Present: athlete.presenze,
+      Justified: athlete.giustificate,
+      'Total Sessions': athlete.total_sessions,
+      Percentage: athlete.percent ? `${athlete.percent.toFixed(1)}%` : '0%',
+    }));
+
+    // Create workbook and worksheet
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(exportData);
+
+    // Set column widths
+    const colWidths = [
+      { wch: 5 }, // #
+      { wch: 10 }, // Fincode
+      { wch: 25 }, // Name
+      { wch: 8 }, // Present
+      { wch: 10 }, // Justified
+      { wch: 12 }, // Total Sessions
+      { wch: 12 }, // Percentage
+    ];
+    ws['!cols'] = colWidths;
+
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(wb, ws, 'Attendance Summary');
+
+    // Generate filename with current filters
+    const seasonText = season;
+    const typeText = typeFilter === 'all' ? 'All' : typeFilter;
+    const groupText = athleteGroupFilter === 'all' ? 'All' : athleteGroupFilter;
+    const filename = `Attendance_${seasonText}_${typeText}_${groupText}_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+    // Save file
+    XLSX.writeFile(wb, filename);
+  };
+
+  // Fetch attendance summary using the get_attendance_stats_by_season function
   const handleFilter = async () => {
     setLoading(true);
     setError(null);
-    // Prepare parameters for the function
-    let groupParam = athleteGroupFilter === 'all' ? null : athleteGroupFilter;
-    let startDate = '';
-    let endDate = '';
-    if (period === 'season') {
-      startDate = '2024-09-01';
-      endDate = '2025-08-31';
-    } else if (period === 'month') {
-      const now = new Date();
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1)
-        .toISOString()
-        .slice(0, 10);
-      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-        .toISOString()
-        .slice(0, 10);
-    } else if (period === 'custom' && customStart && customEnd) {
-      startDate = customStart;
-      endDate = customEnd;
-    }
+
     let typeParam = typeFilter === 'all' ? null : typeFilter;
+    let groupParam = athleteGroupFilter === 'all' ? null : athleteGroupFilter;
+
     try {
-      // Call the riepilogo_presenze function with the correct parameter order
-      let query = supabase.rpc('riepilogo_presenze', {
-        gruppo: groupParam,
-        start_date: startDate,
-        end_date: endDate,
+      // Debug logging
+      console.log('Calling function with parameters:', {
+        season: season,
         session_type: typeParam,
+        group_name: groupParam,
       });
+
+      // Call the get_attendance_stats_by_season function
+      let query = supabase.rpc('get_attendance_stats_by_season', {
+        season: season,
+        session_type: typeParam,
+        group_name: groupParam,
+      });
+
       // Order by percent desc
       query = query.order('percent', { ascending: false });
       const { data, error } = await query;
+
       if (error) {
         setError(error.message);
         setAthletes([]);
@@ -75,39 +113,20 @@ const AttendanceList: React.FC = () => {
       <h1 className="page-title">Attendance Summary</h1>
       <div className="form-group">
         <div>
-          <label htmlFor="period-select" className="form-label">
-            Period:
+          <label htmlFor="season-select" className="form-label">
+            Season:
           </label>
           <select
-            id="period-select"
-            value={period}
-            onChange={e => setPeriod(e.target.value)}
+            id="season-select"
+            value={season}
+            onChange={e => setSeason(e.target.value)}
             className="form-select ml-1"
           >
-            <option value="season">Season (01.09.2024 - 31.08.2025)</option>
-            <option value="month">Current Month</option>
-            <option value="custom">Custom Range</option>
+            <option value="2023-24">2023-24</option>
+            <option value="2024-25">2024-25</option>
+            <option value="2025-26">2025-26</option>
           </select>
         </div>
-
-        {period === 'custom' && (
-          <div>
-            <input
-              type="date"
-              value={customStart}
-              onChange={e => setCustomStart(e.target.value)}
-              required
-              className="form-input mr-1"
-            />
-            <input
-              type="date"
-              value={customEnd}
-              onChange={e => setCustomEnd(e.target.value)}
-              required
-              className="form-input"
-            />
-          </div>
-        )}
 
         <div>
           <label htmlFor="type-select" className="form-label">
@@ -148,11 +167,17 @@ const AttendanceList: React.FC = () => {
           disabled={loading}
           className="athlete-view-btn"
         >
-                <img
-                  src={filterIcon}
-                  alt="Delete"
-                  className="athlete-view-icon"
-                />
+          <img src={filterIcon} alt="Filter" className="athlete-view-icon" />
+        </button>
+
+        <button
+          onClick={exportToExcel}
+          disabled={loading || athletes.length === 0}
+          className="athlete-view-btn"
+          style={{ marginLeft: '8px', backgroundColor: '#28a745' }}
+          title="Export to Excel"
+        >
+          📊 Export
         </button>
       </div>
       {error && <div className="error-message">{error}</div>}

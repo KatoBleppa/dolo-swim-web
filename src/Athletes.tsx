@@ -75,13 +75,10 @@ const ListAthletesPage = () => {
 
     try {
       // Call the database function get_athletes_with_rosters with both parameters
-      console.log('Calling function with:', { season, group }); // Debug log
       const { data, error } = await supabase.rpc('get_athletes_with_rosters', {
         paramseason: season,
         paramgroups: group,
       });
-
-      console.log('Function response:', { data, error }); // Debug log
 
       if (error) {
         console.error('Database error:', error);
