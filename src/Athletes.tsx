@@ -22,6 +22,7 @@ const ListAthletesPage = () => {
   const [seasonsLoading, setSeasonsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedAthlete, setSelectedAthlete] = useState<any | null>(null);
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
 
   const groupOptions = [
     { label: 'Select a group...', value: '' }, // Added default option
@@ -30,6 +31,25 @@ const ListAthletesPage = () => {
     { label: 'EB', value: 'EB' },
     { label: 'PROP', value: 'PROP' },
   ];
+
+  // Helper function to generate Supabase storage URL for athlete portraits
+  const getPortraitUrl = (fincode: number | string): string | null => {
+    if (!fincode) {
+      return null;
+    }
+
+    // Generate the Supabase storage URL using fincode
+    return `https://rxwlwfhytiwzvntpwlyj.supabase.co/storage/v1/object/public/PortraitPics/${fincode}.jpg`;
+  };
+
+  // Helper function to handle image errors
+  const handleImageError = (fincode: number | string) => {
+    const key = fincode?.toString() || 'unknown';
+    setImageErrors(prev => new Set([...prev, key]));
+    console.log(
+      `Portrait not found in Supabase storage for fincode: ${fincode}. Using default avatar.`
+    );
+  };
 
   useEffect(() => {
     // Fetch seasons from the database
@@ -72,6 +92,7 @@ const ListAthletesPage = () => {
   ) => {
     setLoading(true);
     setError(null);
+    setImageErrors(new Set()); // Clear previous image errors
 
     try {
       // Call the database function get_athletes_with_rosters with both parameters
@@ -167,7 +188,10 @@ const ListAthletesPage = () => {
         selectedGroup !== '' &&
         filteredAthletes.length > 0 && (
           <div className="table-container">
-            <table className="table">
+            <table
+              className="table"
+              style={{ borderSpacing: '0', borderCollapse: 'collapse' }}
+            >
               <thead>
                 <tr className="table-header">
                   <th>Portrait</th>
@@ -176,44 +200,65 @@ const ListAthletesPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredAthletes.map((athlete, idx) => (
-                  <tr key={idx}>
-                    <td className="athlete-portrait-cell">
-                      {athlete.photo ? (
-                        <img
-                          src={athlete.photo}
-                          alt={athlete.name ?? 'Athlete portrait'}
-                          className="athlete-avatar"
-                          referrerPolicy="no-referrer"
-                          onError={e => {
-                            e.currentTarget.src =
-                              'https://ui-avatars.com/api/?name=Avatar&background=cccccc&color=ffffff&size=50';
-                          }}
-                        />
-                      ) : (
-                        <img
-                          src="https://ui-avatars.com/api/?name=Avatar&background=cccccc&color=ffffff&size=50"
-                          alt="Default avatar"
-                          className="athlete-avatar"
-                        />
-                      )}
-                    </td>
-                    <td>{athlete.name}</td>
-                    <td align="center">
-                      <button
-                        onClick={() => setSelectedAthlete(athlete)}
-                        title="View Details"
-                        className="athlete-view-btn"
+                {filteredAthletes.map((athlete, idx) => {
+                  const athleteKey =
+                    athlete.fincode?.toString() || athlete.name || 'unknown';
+                  const hasImageError = imageErrors.has(athleteKey);
+                  const portraitUrl = athlete.fincode
+                    ? getPortraitUrl(athlete.fincode)
+                    : null;
+
+                  return (
+                    <tr key={idx} style={{ margin: '0', padding: '0' }}>
+                      <td
+                        className="athlete-portrait-cell"
+                        style={{ padding: '2px', margin: '0' }}
                       >
-                        <img
-                          src={eyeIcon}
-                          alt="View"
-                          className="athlete-view-icon"
-                        />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                        {portraitUrl && !hasImageError ? (
+                          <img
+                            src={portraitUrl}
+                            alt={athlete.name ?? 'Athlete portrait'}
+                            className="athlete-avatar"
+                            referrerPolicy="no-referrer"
+                            onError={e => {
+                              console.log(
+                                `Failed to load portrait for athlete ${athlete.name} (fincode: ${athlete.fincode})`
+                              );
+                              handleImageError(athlete.fincode);
+                              e.currentTarget.src =
+                                'https://ui-avatars.com/api/?name=Avatar&background=cccccc&color=ffffff&size=50';
+                            }}
+                          />
+                        ) : (
+                          <img
+                            src="https://ui-avatars.com/api/?name=Avatar&background=cccccc&color=ffffff&size=50"
+                            alt="Default avatar"
+                            className="athlete-avatar"
+                          />
+                        )}
+                      </td>
+                      <td style={{ padding: '2px', margin: '0' }}>
+                        {athlete.name}
+                      </td>
+                      <td
+                        align="center"
+                        style={{ padding: '2px', margin: '0' }}
+                      >
+                        <button
+                          onClick={() => setSelectedAthlete(athlete)}
+                          title="View Details"
+                          className="athlete-view-btn"
+                        >
+                          <img
+                            src={eyeIcon}
+                            alt="View"
+                            className="athlete-view-icon"
+                          />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -223,24 +268,39 @@ const ListAthletesPage = () => {
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="athlete-modal-header">
-              {selectedAthlete.photo ? (
-                <img
-                  src={selectedAthlete.photo}
-                  alt={selectedAthlete.name ?? 'Athlete portrait'}
-                  className="athlete-modal-avatar"
-                  referrerPolicy="no-referrer"
-                  onError={e => {
-                    e.currentTarget.src =
-                      'https://ui-avatars.com/api/?name=Avatar&background=cccccc&color=ffffff&size=60';
-                  }}
-                />
-              ) : (
-                <img
-                  src="https://ui-avatars.com/api/?name=Avatar&background=cccccc&color=ffffff&size=60"
-                  alt="Default avatar"
-                  className="athlete-modal-avatar"
-                />
-              )}
+              {(() => {
+                const athleteKey =
+                  selectedAthlete.fincode?.toString() ||
+                  selectedAthlete.name ||
+                  'unknown';
+                const hasImageError = imageErrors.has(athleteKey);
+                const portraitUrl = selectedAthlete.fincode
+                  ? getPortraitUrl(selectedAthlete.fincode)
+                  : null;
+
+                return portraitUrl && !hasImageError ? (
+                  <img
+                    src={portraitUrl}
+                    alt={selectedAthlete.name ?? 'Athlete portrait'}
+                    className="athlete-modal-avatar"
+                    referrerPolicy="no-referrer"
+                    onError={e => {
+                      console.log(
+                        `Failed to load portrait for athlete ${selectedAthlete.name} (fincode: ${selectedAthlete.fincode})`
+                      );
+                      handleImageError(selectedAthlete.fincode);
+                      e.currentTarget.src =
+                        'https://ui-avatars.com/api/?name=Avatar&background=cccccc&color=ffffff&size=60';
+                    }}
+                  />
+                ) : (
+                  <img
+                    src="https://ui-avatars.com/api/?name=Avatar&background=cccccc&color=ffffff&size=60"
+                    alt="Default avatar"
+                    className="athlete-modal-avatar"
+                  />
+                );
+              })()}
               <h3 className="athlete-modal-name">{selectedAthlete.name}</h3>
             </div>
 

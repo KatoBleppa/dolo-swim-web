@@ -7,8 +7,6 @@ import editIcon from './assets/icons/icons8-create-100.png';
 import deleteIcon from './assets/icons/icons8-delete-100.png';
 import closeIcon from './assets/icons/icons8-close-100.png';
 
-console.log('TrainingsCalendar file loaded');
-
 interface Session {
   session_id: number;
   date: string; // ISO date string, e.g. "2025-06-14"
@@ -156,8 +154,8 @@ const TrainingsCalendar: React.FC = () => {
     setNewVolume('');
     setNewDesc('');
     setNewLocation('Bolzano');
-    setNewPoolName('Lido');
-    setNewPoolLength('50');
+    setNewPoolName('Maso');
+    setNewPoolLength('25');
     setModalOpen(true);
   };
 

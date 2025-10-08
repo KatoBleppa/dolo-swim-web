@@ -44,10 +44,31 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
 }) => {
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [loading, setLoading] = useState(true);
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
+
+  // Helper function to generate Supabase storage URL for athlete portraits
+  const getPortraitUrl = (fincode: number | string): string | null => {
+    if (!fincode) {
+      return null;
+    }
+
+    // Generate the Supabase storage URL using fincode
+    return `https://rxwlwfhytiwzvntpwlyj.supabase.co/storage/v1/object/public/PortraitPics/${fincode}.jpg`;
+  };
+
+  // Helper function to handle image errors
+  const handleImageError = (fincode: number | string) => {
+    const key = fincode?.toString() || 'unknown';
+    setImageErrors(prev => new Set([...prev, key]));
+    console.log(
+      `Portrait not found in Supabase storage for fincode: ${fincode}. Using default avatar.`
+    );
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      setImageErrors(new Set()); // Clear previous image errors
       try {
         // First, get the session date to determine the season
         const { data: sessionData, error: sessionError } = await supabase
@@ -201,16 +222,13 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
                 </thead>
                 <tbody>
                   {athletes.map(athlete => {
-                    // Convert Google Drive URLs to direct links
-                    let photoUrl = athlete.photo;
-                    if (photoUrl && photoUrl.includes('drive.google.com')) {
-                      const fileIdMatch = photoUrl.match(
-                        /\/d\/([a-zA-Z0-9_-]+)/
-                      );
-                      if (fileIdMatch) {
-                        photoUrl = `https://drive.google.com/uc?id=${fileIdMatch[1]}`;
-                      }
-                    }
+                    const athleteKey =
+                      athlete.fincode?.toString() || athlete.name || 'unknown';
+                    const hasImageError = imageErrors.has(athleteKey);
+                    const portraitUrl = athlete.fincode
+                      ? getPortraitUrl(athlete.fincode)
+                      : null;
+
                     return (
                       <tr
                         key={athlete.fincode}
@@ -223,9 +241,9 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
                         <td
                           style={{ padding: '8px', border: '1px solid #ddd' }}
                         >
-                          {photoUrl ? (
+                          {portraitUrl && !hasImageError ? (
                             <img
-                              src={photoUrl}
+                              src={portraitUrl}
                               alt={athlete.name}
                               style={{
                                 width: '40px',
@@ -233,10 +251,14 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
                                 borderRadius: '20px',
                                 objectFit: 'cover',
                               }}
-                              onError={e =>
-                                (e.currentTarget.src =
-                                  'https://ui-avatars.com/api/?name=Avatar&background=cccccc&color=ffffff&size=40')
-                              }
+                              onError={e => {
+                                console.log(
+                                  `Failed to load portrait for athlete ${athlete.name} (fincode: ${athlete.fincode})`
+                                );
+                                handleImageError(athlete.fincode);
+                                e.currentTarget.src =
+                                  'https://ui-avatars.com/api/?name=Avatar&background=cccccc&color=ffffff&size=40';
+                              }}
                             />
                           ) : (
                             <img

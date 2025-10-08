@@ -20,6 +20,26 @@ const AttendanceList: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [athleteGroupFilter, setAthleteGroupFilter] = useState<string>('all');
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
+
+  // Helper function to generate Supabase storage URL for athlete portraits
+  const getPortraitUrl = (fincode: number | string): string | null => {
+    if (!fincode) {
+      return null;
+    }
+
+    // Generate the Supabase storage URL using fincode
+    return `https://rxwlwfhytiwzvntpwlyj.supabase.co/storage/v1/object/public/PortraitPics/${fincode}.jpg`;
+  };
+
+  // Helper function to handle image errors
+  const handleImageError = (fincode: number | string) => {
+    const key = fincode?.toString() || 'unknown';
+    setImageErrors(prev => new Set([...prev, key]));
+    console.log(
+      `Portrait not found in Supabase storage for fincode: ${fincode}. Using default avatar.`
+    );
+  };
 
   // Export to Excel function
   const exportToExcel = () => {
@@ -31,7 +51,6 @@ const AttendanceList: React.FC = () => {
     // Prepare data for export
     const exportData = athletes.map((athlete, index) => ({
       '#': index + 1,
-      Fincode: athlete.fincode,
       Name: athlete.name,
       Present: athlete.presenze,
       Justified: athlete.giustificate,
@@ -46,8 +65,7 @@ const AttendanceList: React.FC = () => {
     // Set column widths
     const colWidths = [
       { wch: 5 }, // #
-      { wch: 10 }, // Fincode
-      { wch: 25 }, // Name
+      { wch: 30 }, // Name (increased width)
       { wch: 8 }, // Present
       { wch: 10 }, // Justified
       { wch: 12 }, // Total Sessions
@@ -72,6 +90,7 @@ const AttendanceList: React.FC = () => {
   const handleFilter = async () => {
     setLoading(true);
     setError(null);
+    setImageErrors(new Set()); // Clear previous image errors
 
     let typeParam = typeFilter === 'all' ? null : typeFilter;
     let groupParam = athleteGroupFilter === 'all' ? null : athleteGroupFilter;
@@ -194,56 +213,83 @@ const AttendanceList: React.FC = () => {
               <thead className="table-header">
                 <tr>
                   <th>Portrait</th>
-                  <th>Fincode</th>
-                  <th>Name</th>
-                  <th>Present</th>
-                  <th>Justified</th>
-                  <th>Total</th>
-                  <th>Prct</th>
+                  <th style={{ minWidth: '200px' }}>Name</th>
+                  <th style={{ width: '50px', minWidth: '50px' }}>P</th>
+                  <th style={{ width: '50px', minWidth: '50px' }}>J</th>
+                  <th style={{ width: '50px', minWidth: '50px' }}>T</th>
+                  <th>%</th>
                 </tr>
               </thead>
               <tbody>
                 {athletes.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="no-data">
+                    <td colSpan={6} className="no-data">
                       No data available for the selected filters
                     </td>
                   </tr>
                 ) : (
-                  athletes.map((ath, idx) => (
-                    <tr key={ath.fincode || idx}>
-                      <td className="athlete-portrait-cell">
-                        {ath.photo ? (
-                          <img
-                            src={ath.photo}
-                            alt={ath.name ?? 'Athlete portrait'}
-                            className="athlete-avatar"
-                            referrerPolicy="no-referrer"
-                            onError={e => {
-                              e.currentTarget.src =
-                                'https://ui-avatars.com/api/?name=Avatar&background=cccccc&color=ffffff&size=50';
-                            }}
-                          />
-                        ) : (
-                          <img
-                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(ath.name || 'Avatar')}&background=cccccc&color=ffffff&size=50`}
-                            alt="Default avatar"
-                            className="athlete-avatar"
-                          />
-                        )}
-                      </td>
-                      <td>{ath.fincode}</td>
-                      <td>{ath.name}</td>
-                      <td>{ath.presenze}</td>
-                      <td>{ath.giustificate}</td>
-                      <td>{ath.total_sessions}</td>
-                      <td>
-                        {ath.percent != null
-                          ? ath.percent.toFixed(1) + '%'
-                          : ''}
-                      </td>
-                    </tr>
-                  ))
+                  athletes.map((ath, idx) => {
+                    const athleteKey =
+                      ath.fincode?.toString() || ath.name || 'unknown';
+                    const hasImageError = imageErrors.has(athleteKey);
+                    const portraitUrl = ath.fincode
+                      ? getPortraitUrl(ath.fincode)
+                      : null;
+
+                    return (
+                      <tr key={ath.fincode || idx}>
+                        <td className="athlete-portrait-cell">
+                          {portraitUrl && !hasImageError ? (
+                            <img
+                              src={portraitUrl}
+                              alt={ath.name ?? 'Athlete portrait'}
+                              className="athlete-avatar"
+                              referrerPolicy="no-referrer"
+                              onError={e => {
+                                console.log(
+                                  `Failed to load portrait for athlete ${ath.name} (fincode: ${ath.fincode})`
+                                );
+                                handleImageError(ath.fincode);
+                                e.currentTarget.src =
+                                  'https://ui-avatars.com/api/?name=Avatar&background=cccccc&color=ffffff&size=50';
+                              }}
+                            />
+                          ) : (
+                            <img
+                              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(ath.name || 'Avatar')}&background=cccccc&color=ffffff&size=50`}
+                              alt="Default avatar"
+                              className="athlete-avatar"
+                            />
+                          )}
+                        </td>
+                        <td
+                          style={{
+                            whiteSpace: 'nowrap',
+                            minWidth: '200px',
+                            maxWidth: '200px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          {ath.name}
+                        </td>
+                        <td style={{ width: '50px', textAlign: 'center' }}>
+                          {ath.presenze}
+                        </td>
+                        <td style={{ width: '50px', textAlign: 'center' }}>
+                          {ath.giustificate}
+                        </td>
+                        <td style={{ width: '50px', textAlign: 'center' }}>
+                          {ath.total_sessions}
+                        </td>
+                        <td>
+                          {ath.percent != null
+                            ? ath.percent.toFixed(1) + '%'
+                            : ''}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
