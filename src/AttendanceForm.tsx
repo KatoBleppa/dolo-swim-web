@@ -65,6 +65,18 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
     );
   };
 
+  // Helper function to count attendance statuses
+  const getStatusCounts = () => {
+    const counts = { P: 0, J: 0, A: 0, N: 0 };
+    athletes.forEach(athlete => {
+      const status = athlete.status || 'N';
+      if (status in counts) {
+        counts[status as keyof typeof counts]++;
+      }
+    });
+    return counts;
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -200,6 +212,8 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
     }
   };
 
+  const statusCounts = getStatusCounts();
+
   return (
     <div className="modal-overlay">
       <div
@@ -331,6 +345,87 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
                   style={{ backgroundColor: '#f7b6b6' }}
                 ></div>
                 <span className="legend-text">A - Absent</span>
+              </div>
+            </div>
+
+            {/* Live Counter */}
+            <div
+              style={{
+                marginTop: '15px',
+                padding: '10px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '8px',
+                border: '1px solid #dee2e6',
+              }}
+            >
+              <h4
+                style={{
+                  margin: '0 0 10px 0',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                  color: '#333',
+                }}
+              >
+                Attendance Summary
+              </h4>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-around',
+                  textAlign: 'center',
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      fontSize: '18px',
+                      fontWeight: 'bold',
+                      color: '#28a745',
+                    }}
+                  >
+                    {statusCounts.P}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>Present</div>
+                </div>
+                <div>
+                  <div
+                    style={{
+                      fontSize: '18px',
+                      fontWeight: 'bold',
+                      color: '#ffc107',
+                    }}
+                  >
+                    {statusCounts.J}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>
+                    Justified
+                  </div>
+                </div>
+                <div>
+                  <div
+                    style={{
+                      fontSize: '18px',
+                      fontWeight: 'bold',
+                      color: '#dc3545',
+                    }}
+                  >
+                    {statusCounts.A}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>Absent</div>
+                </div>
+                <div>
+                  <div
+                    style={{
+                      fontSize: '18px',
+                      fontWeight: 'bold',
+                      color: '#6c757d',
+                    }}
+                  >
+                    {statusCounts.N}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>Not Set</div>
+                </div>
               </div>
             </div>
 
