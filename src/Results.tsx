@@ -80,8 +80,6 @@ const Results: React.FC = () => {
       setError(null);
 
       try {
-        let data, error;
-
         // First, let's check what's actually in the results_overview table for debugging
         const debugResponse = await supabase
           .from('results_overview')
@@ -127,12 +125,14 @@ const Results: React.FC = () => {
                 response = altResponse;
                 break;
               }
-            } catch (altError) {}
+            } catch {
+              // Ignore alternative error, continue with original response
+            }
           }
         }
 
-        data = response.data;
-        error = response.error;
+        const data = response.data;
+        const error = response.error;
 
         if (error) {
           throw error;

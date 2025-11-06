@@ -220,8 +220,6 @@ const Dashboard = () => {
             continue;
           }
 
-          console.log(`Events data for ${seasonLabel}:`, eventsData);
-
           const eventCount = eventsData?.length || 0;
 
           summaries.push({
@@ -237,7 +235,6 @@ const Dashboard = () => {
           );
         }
 
-        console.log(`Final summaries:`, summaries);
         setSeasonSummaries(summaries);
       } catch (err: any) {
         console.error('Season summary error:', err);
@@ -283,39 +280,84 @@ const Dashboard = () => {
               <p>No upcoming events found.</p>
             ) : (
               <div
-                className="table-container"
-                style={{ width: '100%', maxWidth: '600px' }}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                  gap: '1rem',
+                  width: '100%',
+                  maxWidth: '800px'
+                }}
               >
-                <table className="table">
-                  <thead className="table-header">
-                    <tr>
-                      <th>Start Date</th>
-                      <th>End Date</th>
-                      <th>Event Name</th>
-                      <th>Location</th>
-                      <th>Course</th>
-                      <th>Groups</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {nextEvents.map((event, index) => (
-                      <tr key={index}>
-                        <td>{formatDate(event.mindate)}</td>
-                        <td>{formatDate(event.maxdate)}</td>
-                        <td>{event.name}</td>
-                        <td>{event.place}</td>
-                        <td>
-                          {event.course === 1
-                            ? '50m'
-                            : event.course === 2
-                              ? '25m'
-                              : event.course}
-                        </td>
-                        <td>{event.groups ? event.groups.join(', ') : ''}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                {nextEvents.map((event, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      background: 'white',
+                      border: '1px solid #ddd',
+                      borderRadius: '8px',
+                      padding: '1rem',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                      cursor: 'pointer'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                    }}
+                  >
+                    <div style={{ 
+                      fontSize: '1.1rem', 
+                      fontWeight: 'bold', 
+                      marginBottom: '0.5rem',
+                      color: '#333'
+                    }}>
+                      {event.name}
+                    </div>
+                    <div style={{ 
+                      display: 'grid', 
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: '0.5rem',
+                      fontSize: '0.9rem'
+                    }}>
+                      <div>
+                        <strong>Start:</strong><br />
+                        {formatDate(event.mindate)}
+                      </div>
+                      <div>
+                        <strong>End:</strong><br />
+                        {formatDate(event.maxdate)}
+                      </div>
+                      <div>
+                        <strong>City:</strong><br />
+                        {event.place}
+                      </div>
+                      <div>
+                        <strong>Course:</strong><br />
+                        {event.course === 1
+                          ? '50m'
+                          : event.course === 2
+                            ? '25m'
+                            : event.course}
+                      </div>
+                    </div>
+                    <div style={{ 
+                      marginTop: '0.5rem',
+                      fontSize: '0.9rem'
+                    }}>
+                      <strong>Groups:</strong><br />
+                      <span style={{ 
+                        color: '#666',
+                        fontStyle: event.groups && event.groups.length > 0 ? 'normal' : 'italic'
+                      }}>
+                        {event.groups ? event.groups.join(', ') : 'No groups specified'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -350,29 +392,88 @@ const Dashboard = () => {
               <p>No upcoming workouts found.</p>
             ) : (
               <div
-                className="table-container"
-                style={{ width: '100%', maxWidth: '600px' }}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                  gap: '1rem',
+                  width: '100%',
+                  maxWidth: '800px'
+                }}
               >
-                <table className="table">
-                  <thead className="table-header">
-                    <tr>
-                      <th>Date</th>
-                      <th>Start Time</th>
-                      <th>Type</th>
-                      <th>Groups</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {nextWorkouts.map((workout, index) => (
-                      <tr key={index}>
-                        <td>{formatDate(workout.date)}</td>
-                        <td>{workout.starttime.substring(0, 5)}</td>
-                        <td>{workout.type}</td>
-                        <td>{workout.groups}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                {nextWorkouts.map((workout, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      background: 'white',
+                      border: '1px solid #ddd',
+                      borderRadius: '8px',
+                      padding: '1rem',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                      cursor: 'pointer'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                    }}
+                  >
+                    <div style={{ 
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '0.75rem'
+                    }}>
+                      <div style={{ 
+                        fontSize: '1.1rem', 
+                        fontWeight: 'bold',
+                        color: '#333'
+                      }}>
+                        {workout.type}
+                      </div>
+                      <div style={{
+                        fontSize: '1rem',
+                        color: '#007acc',
+                        fontWeight: '600'
+                      }}>
+                        {workout.starttime.substring(0, 5)}
+                      </div>
+                    </div>
+                    <div style={{ 
+                      display: 'grid', 
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: '0.5rem',
+                      fontSize: '0.9rem',
+                      marginBottom: '0.5rem'
+                    }}>
+                      <div>
+                        <strong>Date:</strong><br />
+                        {formatDate(workout.date)}
+                      </div>
+                      <div>
+                        <strong>Groups:</strong><br />
+                        <span style={{ 
+                          color: '#666',
+                          fontStyle: workout.groups ? 'normal' : 'italic'
+                        }}>
+                          {workout.groups || 'No groups specified'}
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{
+                      borderTop: '1px solid #eee',
+                      paddingTop: '0.5rem',
+                      fontSize: '0.8rem',
+                      color: '#888',
+                      textAlign: 'center'
+                    }}>
+                      Training Session
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -436,9 +537,9 @@ const Dashboard = () => {
                     <tr>
                       <th>Season</th>
                       <th>Total KM</th>
-                      <th>Total Sessions</th>
-                      <th>Average KM</th>
-                      <th>Events Count</th>
+                      <th>Sessions</th>
+                      <th>Avg KM</th>
+                      <th>Events</th>
                     </tr>
                   </thead>
                   <tbody>

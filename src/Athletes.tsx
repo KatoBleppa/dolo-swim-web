@@ -126,7 +126,7 @@ const ListAthletesPage = () => {
         // Since filtering is now done by the database function, set filtered athletes directly
         setFilteredAthletes(sortedAthletes);
       }
-    } catch (err) {
+    } catch {
       setError('Error fetching athletes for selected season and group');
       setAthletes([]);
       setFilteredAthletes([]);

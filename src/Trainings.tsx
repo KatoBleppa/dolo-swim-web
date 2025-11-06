@@ -177,7 +177,7 @@ const TrainingsPage = () => {
 
   const handleSaveCreate = async () => {
     setFormError(null);
-    const { session_id, ...insertFields } = form;
+    const { session_id, ...insertFields } = form; // eslint-disable-line @typescript-eslint/no-unused-vars
     const { error } = await supabase.from('sessions').insert([insertFields]);
     if (error) {
       setFormError(error.message);

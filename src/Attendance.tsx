@@ -92,8 +92,8 @@ const AttendanceList: React.FC = () => {
     setError(null);
     setImageErrors(new Set()); // Clear previous image errors
 
-    let typeParam = typeFilter === 'all' ? null : typeFilter;
-    let groupParam = athleteGroupFilter === 'all' ? null : athleteGroupFilter;
+    const typeParam = typeFilter === 'all' ? null : typeFilter;
+    const groupParam = athleteGroupFilter === 'all' ? null : athleteGroupFilter;
 
     try {
       // Debug logging

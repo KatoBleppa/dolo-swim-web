@@ -223,7 +223,7 @@ const Personalbests: React.FC = () => {
         // Format as yyyy-mm-dd
         return dateObj.toISOString().split('T')[0];
       }
-    } catch (e) {
+    } catch {
       // If date parsing fails, return original value
     }
     return date;

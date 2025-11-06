@@ -3,29 +3,37 @@ import { supabase } from './supabaseClient';
 import refreshIcon from './assets/icons/icons8-refresh-100.png';
 
 interface ProgressData {
-  membersid: number;
-  name: string;
-  selgroup: string;
-  stylesid: number;
-  distance: number;
-  stroke_shortname: string;
-  course: number;
-  eventdate_prima: string;
-  totaltime_prima: number;
-  tempo_prima: string;
-  eventdate_dopo: string;
-  totaltime_dopo: number;
-  tempo_dopo: number;
-  delta_sec: number;
-  miglioramento_perc: number;
+  membersid: number; // bigint from PostgreSQL becomes number in JS
+  name: string; // text
+  selgroup: string; // text
+  stylesid: number; // integer
+  distance: number; // bigint from PostgreSQL becomes number in JS
+  stroke_shortname: string; // text
+  course: number; // integer
+  eventdate_prima: string; // date becomes string in JS
+  totaltime_prima: string; // numeric becomes string in JS
+  tempo_prima: string; // text
+  eventdate_dopo: string; // date becomes string in JS
+  totaltime_dopo: string; // numeric becomes string in JS
+  tempo_dopo: string; // text
+  delta_sec: number; // Actually returning bigint, not numeric
+  miglioramento_perc: string; // numeric becomes string in JS
 }
 
 const Progress: React.FC = () => {
   const [progressData, setProgressData] = useState<ProgressData[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<string>('1');
   const [selectedGroup, setSelectedGroup] = useState<string>('ASS');
+  const [selectedSeason, setSelectedSeason] = useState<string>('2024-25');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
+
+  // Helper function to safely convert PostgreSQL numeric strings to numbers
+  const parseNumeric = (value: string | number): number => {
+    if (typeof value === 'number') return value;
+    const parsed = parseFloat(value);
+    return isNaN(parsed) ? 0 : parsed;
+  };
 
   const courseOptions = [
     { label: '50', value: '1' },
@@ -39,6 +47,12 @@ const Progress: React.FC = () => {
     { label: 'PROP', value: 'PROP' },
   ];
 
+  const seasonOptions = [
+    { label: '2023-24', value: '2023-24' },
+    { label: '2024-25', value: '2024-25' },
+    { label: '2025-26', value: '2025-26' },
+  ];
+
   const fetchProgressData = async () => {
     setLoading(true);
     setError('');
@@ -47,14 +61,16 @@ const Progress: React.FC = () => {
       console.log('Calling RPC with params:', {
         course_param: parseInt(selectedCourse),
         group_param: selectedGroup,
+        season_param: selectedSeason,
       });
 
-      // Use the correct parameter names from the hint
+      // Call the updated function with season support
       const { data, error } = await supabase.rpc(
         'fn_miglioramenti_tempi_estesa',
         {
           course_param: parseInt(selectedCourse),
           group_param: selectedGroup,
+          season_param: selectedSeason,
         }
       );
 
@@ -73,7 +89,9 @@ const Progress: React.FC = () => {
           if (a.name > b.name) return 1;
 
           // If names are equal, sort by improvement percentage (descending)
-          return (b.miglioramento_perc || 0) - (a.miglioramento_perc || 0);
+          const aPerc = parseNumeric(a.miglioramento_perc);
+          const bPerc = parseNumeric(b.miglioramento_perc);
+          return bPerc - aPerc;
         }
       );
 
@@ -104,7 +122,7 @@ const Progress: React.FC = () => {
 
   useEffect(() => {
     fetchProgressData();
-  }, [selectedCourse, selectedGroup]);
+  }, [selectedCourse, selectedGroup, selectedSeason]);
 
   const formatPercentage = (percentage: number) => {
     if (!percentage) return '-';
@@ -129,7 +147,7 @@ const Progress: React.FC = () => {
     const validRows = rows.filter(row => row.miglioramento_perc != null);
     if (validRows.length === 0) return 0;
 
-    const sum = validRows.reduce((acc, row) => acc + row.miglioramento_perc, 0);
+    const sum = validRows.reduce((acc, row) => acc + parseNumeric(row.miglioramento_perc), 0);
     return sum / validRows.length;
   };
 
@@ -140,8 +158,26 @@ const Progress: React.FC = () => {
   return (
     <div className="page-container">
       <h1 className="page-title">Swimming Progress Analysis</h1>
-      <h2 className="text-center mb-4">2023-24 to 2024-25</h2>
+      <h2 className="text-center mb-4">{selectedSeason}</h2>
       <div className="form-group">
+        <div>
+          <label htmlFor="season-select" className="form-label">
+            Season:
+          </label>
+          <select
+            id="season-select"
+            value={selectedSeason}
+            onChange={e => setSelectedSeason(e.target.value)}
+            className="form-select ml-1"
+          >
+            {seasonOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div>
           <label htmlFor="course-select" className="form-label">
             Course:
@@ -185,7 +221,7 @@ const Progress: React.FC = () => {
         >
                 <img
                   src={refreshIcon}
-                  alt="Delete"
+                  alt="Refresh"
                   className="athlete-view-icon"
                 />
         </button>
@@ -223,7 +259,7 @@ const Progress: React.FC = () => {
                 (() => {
                   const groupedData = groupDataBySwimmer(progressData);
                   const rows: React.ReactElement[] = [];
-                  let globalIndex = 0;
+                  let globalIndex = 0; // eslint-disable-line @typescript-eslint/no-unused-vars
 
                   Object.entries(groupedData).forEach(
                     ([swimmerName, swimmerRows]) => {
@@ -252,14 +288,14 @@ const Progress: React.FC = () => {
                             </td>
                             <td
                               className={`progress-percentage ${
-                                row.miglioramento_perc > 0
+                                parseNumeric(row.miglioramento_perc) > 0
                                   ? 'improvement'
-                                  : row.miglioramento_perc < 0
+                                  : parseNumeric(row.miglioramento_perc) < 0
                                     ? 'decline'
                                     : 'neutral'
                               }`}
                             >
-                              {formatPercentage(row.miglioramento_perc)}
+                              {formatPercentage(parseNumeric(row.miglioramento_perc))}
                             </td>
                           </tr>
                         );
