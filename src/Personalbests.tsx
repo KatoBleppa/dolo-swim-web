@@ -2,7 +2,21 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient';
 
 interface Athlete {
-  [key: string]: any; // Flexible interface for athlete data
+  fincode: number;
+  name: string;
+  birthdate: string;
+  gender: string;
+  email: string;
+  phone: string;
+  athleteid: number;
+  groups: string;
+}
+
+interface Season {
+  seasonid: number;
+  description: string;
+  seasonstart: string;
+  seasonend: string;
 }
 
 interface Race {
@@ -31,17 +45,30 @@ const Personalbests: React.FC = () => {
   const [personalBests, setPersonalBests] = useState<PersonalBestRecord[]>([]);
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [races, setRaces] = useState<Race[]>([]);
+  const [seasons, setSeasons] = useState<Season[]>([]);
+  const [selectedSeason, setSelectedSeason] = useState<string>('');
   const [selectedGroup, setSelectedGroup] = useState<string>('');
   const [selectedAthlete, setSelectedAthlete] = useState<string>('');
-  const [filteredAthletes, setFilteredAthletes] = useState<Athlete[]>([]);
 
   const groups = ['ASS', 'EA', 'EB', 'PROP'];
 
+  // Fetch seasons and races on mount
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchInitialData = async () => {
       try {
         setLoading(true);
         setError(null);
+
+        // Fetch seasons
+        const { data: seasonsData, error: seasonsError } = await supabase
+          .from('_seasons')
+          .select('*')
+          .order('seasonstart', { ascending: false });
+
+        if (seasonsError) {
+          console.error('Supabase error when fetching seasons:', seasonsError);
+          throw seasonsError;
+        }
 
         // Fetch races with relaycount = 1
         const { data: racesData, error: racesError } = await supabase
@@ -55,54 +82,64 @@ const Personalbests: React.FC = () => {
           throw racesError;
         }
 
-        // Fetch athletes
-        const { data: athletesData, error: athletesError } = await supabase
-          .from('athletes')
-          .select('*')
-          .order('name', { ascending: true });
-
-        if (athletesError) {
-          console.error(
-            'Supabase error when fetching athletes:',
-            athletesError
-          );
-          throw athletesError;
+        if (seasonsData && seasonsData.length > 0) {
+          setSeasons(seasonsData);
+          // Set the most recent season as default
+          setSelectedSeason(seasonsData[0].description);
         }
 
         if (racesData) {
           setRaces(racesData);
         }
-
-        if (athletesData) {
-          setAthletes(athletesData);
-        }
       } catch (err) {
-        console.error('Error fetching data:', err);
+        console.error('Error fetching initial data:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch data');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    fetchInitialData();
   }, []);
 
-  // Filter athletes based on selected group
+  // Fetch athletes when season and group are selected
   useEffect(() => {
-    if (selectedGroup && athletes.length > 0) {
-      const filtered = athletes.filter(athlete => {
-        // Try different possible field names for group
-        const group =
-          athlete.group || athlete.groups || athlete.category || athlete.level;
-        return group === selectedGroup;
-      });
-      setFilteredAthletes(filtered);
-    } else {
-      setFilteredAthletes([]);
-    }
-    // Reset selected athlete when group changes
+    const fetchAthletes = async () => {
+      if (!selectedSeason || !selectedGroup) {
+        setAthletes([]);
+        setSelectedAthlete('');
+        return;
+      }
+
+      try {
+        const { data: athletesData, error: athletesError } = await supabase.rpc(
+          'get_athletes_with_rosters',
+          {
+            paramseason: selectedSeason,
+            paramgroups: selectedGroup,
+          }
+        );
+
+        if (athletesError) {
+          console.error('Error fetching athletes:', athletesError);
+          throw athletesError;
+        }
+
+        if (athletesData) {
+          setAthletes(athletesData);
+        }
+      } catch (err) {
+        console.error('Error fetching athletes:', err);
+        setError(
+          err instanceof Error ? err.message : 'Failed to fetch athletes'
+        );
+      }
+    };
+
+    fetchAthletes();
+    // Reset selected athlete when season or group changes
     setSelectedAthlete('');
-  }, [selectedGroup, athletes]);
+  }, [selectedSeason, selectedGroup]);
 
   // Process personal bests when athlete is selected
   useEffect(() => {
@@ -262,9 +299,34 @@ const Personalbests: React.FC = () => {
       <h1 className="page-title">Personal Bests</h1>
 
       {/* Filter dropdowns */}
-      <div className="form-group">
-        <div>
-          <label htmlFor="group-select" className="form-label">
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(3, 1fr)', 
+        gap: '1rem',
+        marginBottom: '2rem'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <label htmlFor="season-select" className="form-label" style={{ margin: 0, whiteSpace: 'nowrap' }}>
+            Season:
+          </label>
+          <select
+            id="season-select"
+            className="form-select"
+            value={selectedSeason}
+            onChange={e => setSelectedSeason(e.target.value)}
+            style={{ flex: 1 }}
+          >
+            <option value="">Select Season...</option>
+            {seasons.map(season => (
+              <option key={season.seasonid} value={season.description}>
+                {season.description}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <label htmlFor="group-select" className="form-label" style={{ margin: 0, whiteSpace: 'nowrap' }}>
             Group:
           </label>
           <select
@@ -272,8 +334,12 @@ const Personalbests: React.FC = () => {
             className="form-select"
             value={selectedGroup}
             onChange={e => setSelectedGroup(e.target.value)}
+            disabled={!selectedSeason}
+            style={{ flex: 1 }}
           >
-            <option value="">Select Group...</option>
+            <option value="">
+              {selectedSeason ? 'Select Group...' : 'Select Season First'}
+            </option>
             {groups.map(group => (
               <option key={group} value={group}>
                 {group}
@@ -282,8 +348,8 @@ const Personalbests: React.FC = () => {
           </select>
         </div>
 
-        <div>
-          <label htmlFor="athlete-select" className="form-label">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <label htmlFor="athlete-select" className="form-label" style={{ margin: 0, whiteSpace: 'nowrap' }}>
             Athlete:
           </label>
           <select
@@ -291,13 +357,16 @@ const Personalbests: React.FC = () => {
             className="form-select"
             value={selectedAthlete}
             onChange={e => setSelectedAthlete(e.target.value)}
-            disabled={!selectedGroup}
+            disabled={!selectedGroup || !selectedSeason}
+            style={{ flex: 1 }}
           >
             <option value="">
-              {selectedGroup ? 'Select Athlete...' : 'Select Group First'}
+              {selectedGroup && selectedSeason
+                ? 'Select Athlete...'
+                : 'Select Season & Group First'}
             </option>
-            {filteredAthletes.map(athlete => (
-              <option key={athlete.id || athlete.name} value={athlete.name}>
+            {athletes.map(athlete => (
+              <option key={athlete.fincode} value={athlete.name}>
                 {athlete.name}
               </option>
             ))}
@@ -312,44 +381,65 @@ const Personalbests: React.FC = () => {
             : 'Select an athlete to view personal bests'}
         </div>
       ) : (
-        <div className="table-container">
-          <table className="table">
-            <thead className="table-header">
-              <tr>
-                <th rowSpan={2}>Distance</th>
-                <th rowSpan={2}>Stroke</th>
-                <th colSpan={3} style={{ textAlign: 'center' }}>
-                  50m
-                </th>
-                <th colSpan={3} style={{ textAlign: 'center' }}>
-                  25m
-                </th>
-              </tr>
-              <tr>
-                <th style={{ textAlign: 'center' }}>Time</th>
-                <th style={{ textAlign: 'center' }}>Date</th>
-                <th>Meet</th>
-                <th style={{ textAlign: 'center' }}>Time</th>
-                <th style={{ textAlign: 'center' }}>Date</th>
-                <th>Meet</th>
-              </tr>
-            </thead>
-            <tbody>
-              {personalBests.map((record, index) => (
-                <tr key={index}>
-                  <td>{record.distance}m</td>
-                  <td>{record.stroke_shortname}</td>
-                  <td>{formatTime(record.pool50m.tempofin)}</td>
-                  <td>{formatDate(record.pool50m.eventdate)}</td>
-                  <td>{formatMeet(record.pool50m.meet)}</td>
-                  <td>{formatTime(record.pool25m.tempofin)}</td>
-                  <td>{formatDate(record.pool25m.eventdate)}</td>
-                  <td>{formatMeet(record.pool25m.meet)}</td>
+        <>
+          {/* 25m Personal Bests */}
+          <div className="table-container" style={{ marginBottom: '2rem' }}>
+            <h2 style={{ marginBottom: '1rem', fontSize: '1.25rem', fontWeight: 'bold' }}>
+              25m Pool
+            </h2>
+            <table className="table">
+              <thead className="table-header">
+                <tr>
+                  <th>Distance</th>
+                  <th>Stroke</th>
+                  <th style={{ textAlign: 'center' }}>Time</th>
+                  <th style={{ textAlign: 'center' }}>Date</th>
+                  <th>Meet</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {personalBests.map((record, index) => (
+                  <tr key={index}>
+                    <td>{record.distance}m</td>
+                    <td>{record.stroke_shortname}</td>
+                    <td>{formatTime(record.pool25m.tempofin)}</td>
+                    <td>{formatDate(record.pool25m.eventdate)}</td>
+                    <td>{formatMeet(record.pool25m.meet)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* 50m Personal Bests */}
+          <div className="table-container">
+            <h2 style={{ marginBottom: '1rem', fontSize: '1.25rem', fontWeight: 'bold' }}>
+              50m Pool
+            </h2>
+            <table className="table">
+              <thead className="table-header">
+                <tr>
+                  <th>Distance</th>
+                  <th>Stroke</th>
+                  <th style={{ textAlign: 'center' }}>Time</th>
+                  <th style={{ textAlign: 'center' }}>Date</th>
+                  <th>Meet</th>
+                </tr>
+              </thead>
+              <tbody>
+                {personalBests.map((record, index) => (
+                  <tr key={index}>
+                    <td>{record.distance}m</td>
+                    <td>{record.stroke_shortname}</td>
+                    <td>{formatTime(record.pool50m.tempofin)}</td>
+                    <td>{formatDate(record.pool50m.eventdate)}</td>
+                    <td>{formatMeet(record.pool50m.meet)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

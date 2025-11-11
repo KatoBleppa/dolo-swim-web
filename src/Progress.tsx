@@ -3,21 +3,21 @@ import { supabase } from './supabaseClient';
 import refreshIcon from './assets/icons/icons8-refresh-100.png';
 
 interface ProgressData {
-  membersid: number; // bigint from PostgreSQL becomes number in JS
+  fincode: number; // integer
   name: string; // text
   selgroup: string; // text
   stylesid: number; // integer
-  distance: number; // bigint from PostgreSQL becomes number in JS
+  distance: number; // integer
   stroke_shortname: string; // text
   course: number; // integer
   eventdate_prima: string; // date becomes string in JS
-  totaltime_prima: string; // numeric becomes string in JS
+  totaltime_prima: string; // numeric(10,3) becomes string in JS
   tempo_prima: string; // text
   eventdate_dopo: string; // date becomes string in JS
-  totaltime_dopo: string; // numeric becomes string in JS
+  totaltime_dopo: string; // numeric(10,3) becomes string in JS
   tempo_dopo: string; // text
-  delta_sec: number; // Actually returning bigint, not numeric
-  miglioramento_perc: string; // numeric becomes string in JS
+  delta_sec: string; // numeric(8,2) becomes string in JS
+  miglioramento_perc: string; // numeric(8,2) becomes string in JS
 }
 
 const Progress: React.FC = () => {
@@ -27,6 +27,7 @@ const Progress: React.FC = () => {
   const [selectedSeason, setSelectedSeason] = useState<string>('2024-25');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
 
   // Helper function to safely convert PostgreSQL numeric strings to numbers
   const parseNumeric = (value: string | number): number => {
@@ -35,9 +36,26 @@ const Progress: React.FC = () => {
     return isNaN(parsed) ? 0 : parsed;
   };
 
+  // Helper function to generate Supabase storage URL for athlete portraits
+  const getPortraitUrl = (fincode: number | string): string | null => {
+    if (!fincode) return null;
+    // Generate the Supabase storage URL using fincode
+    console.log('Generating portrait URL for ID:', fincode);
+    return `https://rxwlwfhytiwzvntpwlyj.supabase.co/storage/v1/object/public/PortraitPics/${fincode}.jpg`;
+  };
+
+  // Helper function to handle image errors
+  const handleImageError = (fincode: number | string) => {
+    const key = fincode?.toString() || 'unknown';
+    setImageErrors(prev => new Set([...prev, key]));
+    console.log(
+      `Portrait not found in Supabase storage for fincode: ${fincode}. Using default avatar.`
+    );
+  };
+
   const courseOptions = [
-    { label: '50', value: '1' },
     { label: '25', value: '2' },
+    { label: '50', value: '1' },
   ];
 
   const groupOptions = [
@@ -56,6 +74,7 @@ const Progress: React.FC = () => {
   const fetchProgressData = async () => {
     setLoading(true);
     setError('');
+    setImageErrors(new Set()); // Clear previous image errors
 
     try {
       console.log('Calling RPC with params:', {
@@ -232,117 +251,184 @@ const Progress: React.FC = () => {
       {loading ? (
         <div className="loading-message">Loading progress data...</div>
       ) : (
-        <div className="table-container">
-          <table className="table">
-            <thead className="table-header">
-              <tr>
-                <th>Member ID</th>
-                <th>Name</th>
-                <th>Distance</th>
-                <th>Stroke</th>
-                <th>Date old</th>
-                <th>Time old</th>
-                <th>Date now</th>
-                <th>Time now</th>
-                <th>Delta (sec)</th>
-                <th>Impr (%)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {progressData.length === 0 ? (
-                <tr>
-                  <td colSpan={10} className="no-data">
-                    No data available for the selected filters
-                  </td>
-                </tr>
-              ) : (
-                (() => {
-                  const groupedData = groupDataBySwimmer(progressData);
-                  const rows: React.ReactElement[] = [];
-                  let globalIndex = 0; // eslint-disable-line @typescript-eslint/no-unused-vars
+        <div className="progress-swimmers-container">
+          {progressData.length === 0 ? (
+            <div className="no-data" style={{ textAlign: 'center', padding: '2rem' }}>
+              No data available for the selected filters
+            </div>
+          ) : (
+            (() => {
+              const groupedData = groupDataBySwimmer(progressData);
+              
+              return Object.entries(groupedData).map(([swimmerName, swimmerRows]) => {
+                const avgImprovement = calculateAverageImprovement(swimmerRows);
+                const fincode = swimmerRows[0]?.fincode;
+                const athleteKey = fincode?.toString() || 'unknown';
+                const hasImageError = imageErrors.has(athleteKey);
+                const portraitUrl = fincode ? getPortraitUrl(fincode) : null;
+                
+                console.log('Debug swimmer:', {
+                  swimmerName,
+                  fincode,
+                  athleteKey,
+                  hasImageError,
+                  portraitUrl
+                });
 
-                  Object.entries(groupedData).forEach(
-                    ([swimmerName, swimmerRows]) => {
-                      // Add swimmer's data rows
-                      swimmerRows.forEach((row, localIndex) => {
-                        rows.push(
-                          <tr key={`${swimmerName}-${localIndex}`}>
-                            <td>{row.membersid}</td>
-                            <td>{row.name}</td>
-                            <td>{row.distance}</td>
-                            <td>{row.stroke_shortname}</td>
-                            <td>{row.eventdate_prima}</td>
-                            <td>{row.tempo_prima}</td>
-                            <td>{row.eventdate_dopo}</td>
-                            <td>{row.tempo_dopo}</td>
-                            <td
-                              className={`progress-delta ${
-                                row.delta_sec < 0
-                                  ? 'improvement'
-                                  : row.delta_sec > 0
-                                    ? 'decline'
-                                    : 'neutral'
-                              }`}
-                            >
-                              {row.delta_sec ? row.delta_sec.toFixed(2) : '-'}
-                            </td>
-                            <td
-                              className={`progress-percentage ${
-                                parseNumeric(row.miglioramento_perc) > 0
-                                  ? 'improvement'
-                                  : parseNumeric(row.miglioramento_perc) < 0
-                                    ? 'decline'
-                                    : 'neutral'
-                              }`}
-                            >
-                              {formatPercentage(parseNumeric(row.miglioramento_perc))}
-                            </td>
+                return (
+                  <div key={swimmerName} className="swimmer-section" style={{
+                    marginBottom: '2rem',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    overflow: 'hidden'
+                  }}>
+                    {/* Swimmer Header */}
+                    <div style={{
+                      background: 'linear-gradient(to right, #f8f9fa, #e9ecef)',
+                      padding: '1rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '1rem',
+                      borderBottom: '1px solid #ddd'
+                    }}>
+                      {/* Portrait */}
+                      <div style={{ 
+                        flexShrink: 0,
+                        width: '60px',
+                        height: '60px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        {portraitUrl && !hasImageError ? (
+                          <img
+                            src={portraitUrl}
+                            alt={swimmerName ?? 'Athlete portrait'}
+                            style={{
+                              width: '60px',
+                              height: '60px',
+                              borderRadius: '50%',
+                              objectFit: 'cover',
+                              border: '2px solid #007acc',
+                              display: 'block'
+                            }}
+                            referrerPolicy="no-referrer"
+                            onLoad={() => {
+                              console.log(`Portrait loaded successfully for ${swimmerName} from ${portraitUrl}`);
+                            }}
+                            onError={() => {
+                              console.log(
+                                `Failed to load portrait for athlete ${swimmerName} (fincode: ${fincode}) from URL: ${portraitUrl}`
+                              );
+                              handleImageError(fincode);
+                            }}
+                          />
+                        ) : (
+                          <div style={{
+                            width: '60px',
+                            height: '60px',
+                            borderRadius: '50%',
+                            border: '2px solid #007acc',
+                            background: '#007acc',
+                            color: 'white',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '14px',
+                            fontWeight: 'bold'
+                          }}>
+                            {(swimmerName || 'A').substring(0, 2).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Name and Average */}
+                      <div style={{ flex: 1 }}>
+                        <h3 style={{
+                          margin: 0,
+                          fontSize: '1.25rem',
+                          fontWeight: '600',
+                          color: '#333'
+                        }}>
+                          {swimmerName}
+                        </h3>
+                        <div style={{
+                          fontSize: '1rem',
+                          color: avgImprovement > 0 ? '#28a745' : avgImprovement < 0 ? '#dc3545' : '#6c757d',
+                          fontWeight: '600',
+                          marginTop: '0.25rem'
+                        }}>
+                          Global Average: {formatPercentage(avgImprovement)}
+                        </div>
+                      </div>
+                      
+                      {/* Stats Summary */}
+                      <div style={{
+                        textAlign: 'right',
+                        fontSize: '0.9rem',
+                        color: '#666'
+                      }}>
+                        <div>{swimmerRows.length} events</div>
+                        <div>ID: {fincode}</div>
+                      </div>
+                    </div>
+
+                    {/* Events Table */}
+                    <div className="table-container">
+                      <table className="table" style={{ margin: 0 }}>
+                        <thead className="table-header">
+                          <tr>
+                            <th>Distance</th>
+                            <th>Stroke</th>
+                            <th>Date Before</th>
+                            <th>Time Before</th>
+                            <th>Date After</th>
+                            <th>Time After</th>
+                            <th>Delta (sec)</th>
+                            <th>Improvement (%)</th>
                           </tr>
-                        );
-                        globalIndex++;
-                      });
-
-                      // Add average row for this swimmer
-                      const avgImprovement =
-                        calculateAverageImprovement(swimmerRows);
-                      rows.push(
-                        <tr
-                          key={`${swimmerName}-average`}
-                          className="swimmer-average-row"
-                        >
-                          <td>-</td>
-                          <td className="swimmer-average-name">
-                            {swimmerName} - Average
-                          </td>
-                          <td>-</td>
-                          <td>-</td>
-                          <td>-</td>
-                          <td>-</td>
-                          <td>-</td>
-                          <td>-</td>
-                          <td>-</td>
-                          <td
-                            className={`swimmer-average-percentage ${
-                              avgImprovement > 0
-                                ? 'text-success'
-                                : avgImprovement < 0
-                                  ? 'text-danger'
-                                  : 'text-muted'
-                            }`}
-                          >
-                            {formatPercentage(avgImprovement)}
-                          </td>
-                        </tr>
-                      );
-                      globalIndex++;
-                    }
-                  );
-
-                  return rows;
-                })()
-              )}
-            </tbody>
-          </table>
+                        </thead>
+                        <tbody>
+                          {swimmerRows.map((row, index) => (
+                            <tr key={`${swimmerName}-${index}`}>
+                              <td>{row.distance}m</td>
+                              <td>{row.stroke_shortname}</td>
+                              <td>{row.eventdate_prima}</td>
+                              <td>{row.tempo_prima}</td>
+                              <td>{row.eventdate_dopo}</td>
+                              <td>{row.tempo_dopo}</td>
+                              <td
+                                className={`progress-delta ${
+                                  parseNumeric(row.delta_sec) < 0
+                                    ? 'improvement'
+                                    : parseNumeric(row.delta_sec) > 0
+                                      ? 'decline'
+                                      : 'neutral'
+                                }`}
+                              >
+                                {row.delta_sec ? parseNumeric(row.delta_sec).toFixed(2) : '-'}
+                              </td>
+                              <td
+                                className={`progress-percentage ${
+                                  parseNumeric(row.miglioramento_perc) > 0
+                                    ? 'improvement'
+                                    : parseNumeric(row.miglioramento_perc) < 0
+                                      ? 'decline'
+                                      : 'neutral'
+                                }`}
+                              >
+                                {formatPercentage(parseNumeric(row.miglioramento_perc))}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              });
+            })()
+          )}
         </div>
       )}
 
