@@ -9,6 +9,7 @@ import Trend from './Trend';
 import IndividualCal from './IndividualCal';
 import Progress from './Progress';
 import Results from './Results';
+import Permillili from './Permillili';
 
 const Tools = () => (
   <div style={{ padding: '2rem' }}>
@@ -31,6 +32,7 @@ function AppRouter() {
       <Route path="/tools" element={<Tools />} />
       <Route path="/attendance" element={<Attendance />} />
       <Route path="/results" element={<Results />} />
+      <Route path="/permillili" element={<Permillili />} />
       <Route path="/trend" element={<Trend />} />
     </Routes>
   );

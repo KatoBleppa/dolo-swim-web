@@ -5,7 +5,7 @@ import { supabase } from './supabaseClient';
 interface Meet {
   mindate: string;
   maxdate: string;
-  name: string;
+  meetname: string;
   place: string;
   course: number;
   groups: string[];
@@ -55,7 +55,7 @@ const Dashboard = () => {
 
         const { data, error } = await supabase
           .from('meets_teammanager')
-          .select('mindate, maxdate, name, place, course, groups')
+          .select('mindate, maxdate, meetname, place, course, groups')
           .gte('mindate', today)
           .order('mindate', { ascending: true })
           .limit(2);
