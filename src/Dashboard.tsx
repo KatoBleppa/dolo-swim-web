@@ -315,7 +315,7 @@ const Dashboard = () => {
                       marginBottom: '0.5rem',
                       color: '#333'
                     }}>
-                      {event.name}
+                      {event.meetname}
                     </div>
                     <div style={{ 
                       display: 'grid', 
