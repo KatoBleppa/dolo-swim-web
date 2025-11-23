@@ -1,5 +1,5 @@
--- Function to get permillili results for a specific season
-CREATE OR REPLACE FUNCTION get_permillili_results(p_season TEXT)
+-- Function to get permillili results for a specific season and group
+CREATE OR REPLACE FUNCTION get_permillili_results(p_season TEXT, p_group TEXT)
 RETURNS TABLE (
     meetsid BIGINT,
     meetname TEXT,
@@ -30,9 +30,10 @@ BEGIN
         rosters.groups,
         rosters.cat,
         results_teammanager.stylesid,
-        COALESCE(_limits.limit_dist, results_teammanager.stylesid) AS limit_dist,
+        COALESCE(_limits.limit_dist, 
+                (SELECT _races.distance FROM _races WHERE _races.raceid = results_teammanager.stylesid)):: INT AS limit_dist,
         COALESCE(_limits.limit_descr_short, 
-                 (SELECT styles.descr_short FROM styles WHERE styles.stylesid = results_teammanager.stylesid)) AS limit_descr_short,
+                 (SELECT _races.stroke_shortname FROM _races WHERE _races.raceid = results_teammanager.stylesid)) AS limit_descr_short,
         -- campo calcolato mm:ss.cc
         format_time_decimal(results_teammanager.totaltime) AS result_string,
         format_time_decimal(_limits.limit_time_decimal) AS limit_string,
@@ -57,7 +58,7 @@ BEGIN
         )
     WHERE
         rosters.seasondescription = p_season
-        AND rosters.groups = 'ASS'
+        AND rosters.groups = p_group
         AND meets_teammanager.mindate >= (
             -- Extract start year from season (e.g., '2025-26' -> 2025)
             CASE 

@@ -28,7 +28,8 @@ const Navbar: React.FC = () => {
       category: 'Race',
       items: [
         { path: '/results', label: 'Results' },
-        { path: '/permillili', label: 'Permillili' },
+        { path: '/permillili', label: 'Results with permillili' },
+        { path: '/bestpermillili', label: 'Best Permillili' },
         { path: '/progress', label: 'Progress' },
       ],
     },
