@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import bznLogo from './assets/BZN_White.jpg';
+import finLogo from './assets/FIN.jpg';
 
 interface PermilliliData {
   [key: string]: any;
@@ -93,6 +97,99 @@ const BestPermillili: React.FC = () => {
     fetchPermilliliData();
   }, [selectedSeason, selectedGroup]);
 
+  const exportToPDF = () => {
+    const doc = new jsPDF('landscape'); // Use landscape orientation
+    
+    // Load and add logos
+    const logoWidth = 20;
+    const logoHeight = 15;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    
+    // Add BZN logo on the left
+    doc.addImage(bznLogo, 'JPEG', 10, 5, logoWidth, logoHeight);
+    
+    // Add FIN logo on the right
+    doc.addImage(finLogo, 'JPEG', pageWidth - logoWidth - 10, 5, logoWidth, logoHeight);
+    
+    // Add title centered between logos
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    const title = 'Best Permillili Rankings';
+    const titleWidth = doc.getTextWidth(title);
+    const titleX = (pageWidth - titleWidth) / 2;
+    doc.text(title, titleX, 14);
+    
+    // Add filter info
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    const filterInfo = `Season: ${selectedSeason} | Group: ${selectedGroup}`;
+    const filterWidth = doc.getTextWidth(filterInfo);
+    const filterX = (pageWidth - filterWidth) / 2;
+    doc.text(filterInfo, filterX, 20);
+    
+    // Prepare table data
+    const tableData = filteredResults.map((result, index) => [
+      (index + 1).toString(),
+      result.name || '-',
+      result.limit_dist || '-',
+      result.limit_descr_short || '-',
+      result.mindate || '-',
+      result.meetname || '-',
+      result.result_string || '-',
+      result.limit_string || '-',
+      result.permillili?.toString() || '-',
+    ]);
+
+    // Generate table with all rows on one page
+    const availableHeight = pageHeight - 24 - 10; // Subtract startY and bottom margin
+    const rowHeight = availableHeight / (tableData.length + 1); // +1 for header row
+    
+    autoTable(doc, {
+      head: [['#', 'Athlete', 'Dist', 'Event', 'Date', 'Meet', 'Result', 'Limit', 'Perm']],
+      body: tableData,
+      startY: 24,
+      styles: { 
+        fontSize: 9, 
+        cellPadding: 0.5,
+        overflow: 'linebreak',
+        cellWidth: 'wrap',
+        minCellHeight: Math.max(rowHeight, 3),
+      },
+      headStyles: { 
+        fillColor: [41, 128, 185], 
+        textColor: 255,
+        fontStyle: 'bold',
+        halign: 'center',
+        fontSize: 9,
+      },
+      columnStyles: {
+        0: { cellWidth: 12, halign: 'center' }, // Rank
+        1: { cellWidth: 'auto' }, // Athlete (left-aligned)
+        2: { cellWidth: 15, halign: 'center' }, // Distance
+        3: { cellWidth: 'auto', halign: 'center' }, // Event
+        4: { cellWidth: 25, halign: 'center' }, // Date
+        5: { cellWidth: 'auto', halign: 'center' }, // Meet
+        6: { cellWidth: 22, halign: 'center' }, // Result
+        7: { cellWidth: 22, halign: 'center' }, // Limit
+        8: { cellWidth: 20, halign: 'center', fontStyle: 'bold' }, // Permillili
+      },
+      margin: { 
+        left: 10,
+        right: 10,
+        top: 24,
+        bottom: 10,
+      },
+      theme: 'striped',
+      // Force all content on one page
+      pageBreak: 'avoid',
+      tableWidth: 'auto',
+    });
+
+    // Save the PDF
+    doc.save(`best-permillili-${selectedSeason}-${selectedGroup}.pdf`);
+  };
+
   if (loading) {
     return (
       <div className="page-container">
@@ -150,6 +247,9 @@ const BestPermillili: React.FC = () => {
             ))}
           </select>
         </div>
+        <button className="form-button" onClick={exportToPDF}>
+          Export to PDF
+        </button>
       </div>
 
       {filteredResults.length === 0 ? (
