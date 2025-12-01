@@ -25,12 +25,13 @@ const Navbar: React.FC = () => {
       ],
     },
     {
-      category: 'Race',
+      category: 'Meets',
       items: [
         { path: '/results', label: 'Results' },
         { path: '/permillili', label: 'Results with permillili' },
         { path: '/bestpermillili', label: 'Best Permillili' },
         { path: '/progress', label: 'Progress' },
+        { path: '/racesheet', label: 'Race Sheet' },
       ],
     },
   ];

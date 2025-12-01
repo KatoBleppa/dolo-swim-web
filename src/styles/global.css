@@ -584,6 +584,24 @@ body {
   white-space: nowrap;
 }
 
+/* Column width adjustments for racesheet table */
+/* First column (index) should be narrow */
+.table th:nth-child(1),
+.table td:nth-child(1) {
+  width: 64px;
+  max-width: 64px;
+  text-align: center;
+}
+
+/* Athlete column (second) should be wider and left-aligned */
+.table th:nth-child(2),
+.table td:nth-child(2),
+.table td.athlete {
+  width: 240px;
+  min-width: 140px;
+  text-align: left;
+}
+
 /* Responsive table cells */
 @media (max-width: 767px) {
   .table td {
@@ -592,6 +610,16 @@ body {
     white-space: nowrap; /* Prevent text wrapping in mobile */
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  /* Reset fixed column widths on small screens to allow horizontal scrolling */
+  .table th:nth-child(1),
+  .table td:nth-child(1),
+  .table th:nth-child(2),
+  .table td:nth-child(2),
+  .table td.athlete {
+    width: auto;
+    min-width: 80px;
   }
 
   /* Smaller images in mobile tables */
@@ -611,6 +639,17 @@ body {
 
 .table tbody tr:hover {
   background-color: #e8f4f8;
+}
+
+/* Left-align athlete name cells and ensure grid look */
+.table td.athlete {
+  text-align: left;
+}
+
+/* Ensure visible grid lines for data tables */
+.table th,
+.table td {
+  border: 1px solid #dcdcdc;
 }
 
 /* Calendar specific styles */

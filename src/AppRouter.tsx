@@ -11,6 +11,7 @@ import Progress from './Progress';
 import Results from './Results';
 import ResultsWithPermillili from './ResultsWithPermillili';
 import BestPermillili from './BestPermillili';
+import Racesheet from './Racesheet';
 
 const Tools = () => (
   <div style={{ padding: '2rem' }}>
@@ -35,6 +36,7 @@ function AppRouter() {
       <Route path="/results" element={<Results />} />
       <Route path="/permillili" element={<ResultsWithPermillili />} />
       <Route path="/bestpermillili" element={<BestPermillili />} />
+      <Route path="/racesheet" element={<Racesheet />} />
       <Route path="/trend" element={<Trend />} />
     </Routes>
   );
