@@ -387,7 +387,7 @@ const Personalbests: React.FC = () => {
             <h2 style={{ marginBottom: '1rem', fontSize: '1.25rem', fontWeight: 'bold' }}>
               25m Pool
             </h2>
-            <table className="table">
+            <table className="table" style={{ tableLayout: 'auto' }}>
               <thead className="table-header">
                 <tr>
                   <th>Distance</th>
@@ -416,7 +416,7 @@ const Personalbests: React.FC = () => {
             <h2 style={{ marginBottom: '1rem', fontSize: '1.25rem', fontWeight: 'bold' }}>
               50m Pool
             </h2>
-            <table className="table">
+            <table className="table" style={{ tableLayout: 'auto' }}>
               <thead className="table-header">
                 <tr>
                   <th>Distance</th>

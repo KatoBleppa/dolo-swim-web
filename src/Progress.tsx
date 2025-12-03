@@ -375,7 +375,7 @@ const Progress: React.FC = () => {
 
                     {/* Events Table */}
                     <div className="table-container">
-                      <table className="table" style={{ margin: 0 }}>
+                      <table className="table" style={{ margin: 0, tableLayout: 'auto' }}>
                         <thead className="table-header">
                           <tr>
                             <th>Distance</th>

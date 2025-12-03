@@ -133,7 +133,7 @@ const Racesheet: React.FC = () => {
           
           {!loadingResults && results.length > 0 && (
             <div className="table-container">
-              <table className="table">
+              <table className="table" style={{ tableLayout: 'auto' }}>
                 <thead>
                   <tr>
                     <th>#</th>

@@ -209,15 +209,15 @@ const AttendanceList: React.FC = () => {
             Group: {athleteGroupFilter === 'all' ? 'All' : athleteGroupFilter}
           </h2>
           <div className="table-container">
-            <table className="table">
+            <table className="table" style={{ tableLayout: 'auto' }}>
               <thead className="table-header">
                 <tr>
-                  <th>Portrait</th>
-                  <th style={{ minWidth: '200px' }}>Name</th>
-                  <th style={{ width: '50px', minWidth: '50px' }}>P</th>
-                  <th style={{ width: '50px', minWidth: '50px' }}>J</th>
-                  <th style={{ width: '50px', minWidth: '50px' }}>T</th>
-                  <th>%</th>
+                  <th style={{ width: '60px' }}>Portrait</th>
+                  <th>Name</th>
+                  <th style={{ width: '60px' }}>P</th>
+                  <th style={{ width: '60px' }}>J</th>
+                  <th style={{ width: '60px' }}>T</th>
+                  <th style={{ width: '80px' }}>%</th>
                 </tr>
               </thead>
               <tbody>
@@ -262,27 +262,11 @@ const AttendanceList: React.FC = () => {
                             />
                           )}
                         </td>
-                        <td
-                          style={{
-                            whiteSpace: 'nowrap',
-                            minWidth: '200px',
-                            maxWidth: '200px',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                          }}
-                        >
-                          {ath.name}
-                        </td>
-                        <td style={{ width: '50px', textAlign: 'center' }}>
-                          {ath.presenze}
-                        </td>
-                        <td style={{ width: '50px', textAlign: 'center' }}>
-                          {ath.giustificate}
-                        </td>
-                        <td style={{ width: '50px', textAlign: 'center' }}>
-                          {ath.total_sessions}
-                        </td>
-                        <td>
+                        <td>{ath.name}</td>
+                        <td style={{ textAlign: 'center' }}>{ath.presenze}</td>
+                        <td style={{ textAlign: 'center' }}>{ath.giustificate}</td>
+                        <td style={{ textAlign: 'center' }}>{ath.total_sessions}</td>
+                        <td style={{ textAlign: 'center' }}>
                           {ath.percent != null
                             ? ath.percent.toFixed(1) + '%'
                             : ''}

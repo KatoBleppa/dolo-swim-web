@@ -190,7 +190,7 @@ const ListAthletesPage = () => {
           <div className="table-container">
             <table
               className="table"
-              style={{ borderSpacing: '0', borderCollapse: 'collapse' }}
+              style={{ borderSpacing: '0', borderCollapse: 'collapse', tableLayout: 'auto' }}
             >
               <thead>
                 <tr className="table-header">

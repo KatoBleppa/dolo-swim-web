@@ -280,7 +280,7 @@ const Results: React.FC = () => {
             Meet Details
           </h3>
           <div className="table-container">
-            <table className="table">
+            <table className="table" style={{ tableLayout: 'auto' }}>
               <tbody>
                 <tr>
                   <td>
@@ -354,7 +354,7 @@ const Results: React.FC = () => {
           <div
             className="table-container"
           >
-            <table className="table">
+            <table className="table" style={{ tableLayout: 'auto' }}>
               <thead>
                 <tr>
                   {columns.map(column => (

@@ -532,7 +532,7 @@ const Dashboard = () => {
                 className="table-container"
                 style={{ width: '100%', maxWidth: '600px' }}
               >
-                <table className="table">
+                <table className="table" style={{ tableLayout: 'auto' }}>
                   <thead className="table-header">
                     <tr>
                       <th>Season</th>

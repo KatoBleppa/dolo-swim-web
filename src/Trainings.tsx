@@ -257,7 +257,7 @@ const TrainingsPage = () => {
       {!loading && !error && (
         <>
           <div className="table-container">
-            <table className="table">
+            <table className="table" style={{ tableLayout: 'auto' }}>
               <thead>
                 <tr>
                   <th>Date</th>
@@ -347,7 +347,7 @@ const TrainingsPage = () => {
                   className="modal-form"
                 >
                   <div className="table-container">
-                    <table className="table">
+                    <table className="table" style={{ tableLayout: 'auto' }}>
                       <tbody>
                         <tr>
                           <td>
@@ -551,7 +551,7 @@ const TrainingsPage = () => {
                   className="modal-form"
                 >
                   <div className="table-container">
-                    <table className="table">
+                    <table className="table" style={{ tableLayout: 'auto' }}>
                       <tbody>
                         <tr>
                           <td>
@@ -752,7 +752,7 @@ const TrainingsPage = () => {
               <>
                 <h3 className="modal-title">Session Details</h3>
                 <div className="table-container">
-                  <table className="table">
+                  <table className="table" style={{ tableLayout: 'auto' }}>
                     <thead>
                       <tr>
                         <th>Field</th>

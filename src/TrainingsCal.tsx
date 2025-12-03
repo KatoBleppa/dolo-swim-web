@@ -446,7 +446,7 @@ const TrainingsCalendar: React.FC = () => {
             </h3>
             <form onSubmit={handleInsertOrUpdateSession} className="modal-form">
               <div className="table-container">
-                <table className="table">
+                <table className="table" style={{ tableLayout: 'auto' }}>
                   <tbody>
                     <tr>
                       <td>
@@ -610,7 +610,7 @@ const TrainingsCalendar: React.FC = () => {
             </button>
             <h3 className="modal-title">Session Details</h3>
             <div className="table-container">
-              <table className="table">
+              <table className="table" style={{ tableLayout: 'auto' }}>
                 <thead>
                   <tr>
                     <th>Field</th>

@@ -226,7 +226,7 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
         ) : (
           <div>
             <div className="table-container">
-              <table className="table">
+              <table className="table" style={{ tableLayout: 'auto' }}>
                 <thead className="table-header">
                   <tr>
                     <th>Photo</th>

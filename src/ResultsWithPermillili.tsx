@@ -214,7 +214,7 @@ const ResultsWithPermillili: React.FC = () => {
 
                 {/* Athlete Table */}
                 <div className="table-container">
-                  <table className="table">
+                  <table className="table" style={{ tableLayout: 'auto' }}>
 
                     <tbody>
                       {(() => {

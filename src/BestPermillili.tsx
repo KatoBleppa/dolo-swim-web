@@ -258,11 +258,11 @@ const BestPermillili: React.FC = () => {
         <>
           <h3 className="modal-title">Best Permillili Rankings</h3>
           <div className="table-container">
-            <table className="table">
+            <table className="table" style={{ tableLayout: 'auto' }}>
               <thead>
                 <tr>
                   <th>Rank</th>
-                  <th style={{ width: '250px' }}>Athlete</th>
+                  <th>Athlete</th>
                   <th>Distance</th>
                   <th>Event</th>
                   <th>Date</th>
