@@ -2,7 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient';
 
 interface ResultsTeamManager {
-  [key: string]: any; // Since we don't know the exact structure, we'll use a flexible interface
+  [key: string]: any;
+}
+
+interface Event {
+  ms_id: number;
+  meet_id: number;
+  event_numb: number;
+  ms_race_id: number;
+  gender: string;
+  ms_cat: string;
+  distance?: number;
+  stroke_shortname?: string;
 }
 
 const Results: React.FC = () => {
@@ -11,6 +22,8 @@ const Results: React.FC = () => {
   const [columns, setColumns] = useState<string[]>([]);
   const [meets, setMeets] = useState<{ id: any; name: string }[]>([]);
   const [selectedMeet, setSelectedMeet] = useState<string>('');
+  const [events, setEvents] = useState<Event[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<string>('');
   const [filteredResults, setFilteredResults] = useState<ResultsTeamManager[]>(
     []
   );
@@ -66,10 +79,68 @@ const Results: React.FC = () => {
     fetchMeets();
   }, []);
 
+  // Fetch events when meet is selected
+  useEffect(() => {
+    const fetchEvents = async () => {
+      if (!selectedMeet) {
+        setEvents([]);
+        setSelectedEvent('');
+        return;
+      }
+
+      try {
+        console.log('Fetching events for meet:', selectedMeet);
+        
+        // Fetch events
+        const { data: eventsData, error: eventsError } = await supabase
+          .from('events')
+          .select('*')
+          .eq('meet_id', parseInt(selectedMeet))
+          .order('event_numb', { ascending: true });
+
+        if (eventsError) throw eventsError;
+
+        console.log('Events fetched:', eventsData);
+
+        // Fetch race information for each event
+        const eventsWithRaceData = await Promise.all(
+          (eventsData || []).map(async (event) => {
+            const { data: raceData, error: raceError } = await supabase
+              .from('_races')
+              .select('distance, stroke_shortname')
+              .eq('raceid', event.ms_race_id)
+              .single();
+
+            if (!raceError && raceData) {
+              return {
+                ...event,
+                distance: raceData.distance,
+                stroke_shortname: raceData.stroke_shortname,
+              };
+            }
+            
+            return event;
+          })
+        );
+
+        console.log('Events with race data:', eventsWithRaceData);
+        setEvents(eventsWithRaceData);
+        setSelectedEvent('');
+      } catch (err: any) {
+        console.error('Error fetching events:', err.message);
+        console.error('Full error:', err);
+        setError(`Failed to load events: ${err.message}`);
+        setEvents([]);
+      }
+    };
+
+    fetchEvents();
+  }, [selectedMeet]);
+
+  // Fetch results when event is selected
   useEffect(() => {
     const fetchResults = async () => {
-      // Don't fetch anything if no meet is selected
-      if (!selectedMeet) {
+      if (!selectedEvent) {
         setFilteredResults([]);
         setColumns([]);
         setLoading(false);
@@ -80,100 +151,23 @@ const Results: React.FC = () => {
       setError(null);
 
       try {
-        // First, let's check what's actually in the results_overview table for debugging
-        const debugResponse = await supabase
-          .from('results_overview')
-          .select('meetsid')
-          .limit(10);
-        console.log(
-          'Sample meetsid values from results_overview:',
-          debugResponse.data
-        );
-
-        // Try multiple filtering approaches to handle different data types
-        let response;
-
-        // Try filtering with the original value first
-        response = await supabase
-          .from('results_overview')
-          .select('*')
-          .eq('meetsid', selectedMeet)
-          .order('stylesid, totaltime', { ascending: true });
-
-        // If no results with string, try with integer
-        if (!response.data || response.data.length === 0) {
-          response = await supabase
-            .from('results_overview')
-            .select('*')
-            .eq('meetsid', parseInt(selectedMeet))
-            .order('stylesid, totaltime', { ascending: true });
+        // Find the selected event details
+        const event = events.find(e => String(e.ms_id) === selectedEvent);
+        if (!event) {
+          throw new Error('Event not found');
         }
 
-        // If still no results, try with different possible field names
-        if (!response.data || response.data.length === 0) {
-          const alternativeFields = ['meet_id', 'meetId', 'id'];
+        // Fetch results for the selected event with formatted time
+        const { data, error } = await supabase
+          .rpc('get_results_detail', {
+            meet_id: parseInt(selectedMeet),
+            event_num: event.event_numb
+          });
 
-          for (const field of alternativeFields) {
-            try {
-              const altResponse = await supabase
-                .from('results_overview')
-                .select('*')
-                .eq(field, selectedMeet)
-                .order('stylesid, totaltime', { ascending: true });
+        if (error) throw error;
 
-              if (altResponse.data && altResponse.data.length > 0) {
-                response = altResponse;
-                break;
-              }
-            } catch {
-              // Ignore alternative error, continue with original response
-            }
-          }
-        }
-
-        const data = response.data;
-        const error = response.error;
-
-        if (error) {
-          throw error;
-        }
-
+        console.log('Results with formatted time:', data);
         setFilteredResults(data || []);
-
-        // Extract column names from the first row if data exists
-        if (data && data.length > 0) {
-          const allColumns = Object.keys(data[0]);
-          // Filter out meet-related columns and unwanted result columns
-          const meetColumns = [
-            'meetsid',
-            'name',
-            'poolname',
-            'place',
-            'nation',
-            'mindate',
-            'maxdate',
-            'course',
-          ];
-          const unwantedColumns = [
-            'stylesid',
-            'totaltime',
-            'distance',
-            'stroke shortname',
-            'Stroke shortname',
-            'strokeshortname',
-            'stroke_shortname',
-            'strokename',
-            'stroke',
-            'style',
-            'gender',
-          ];
-          const resultColumns = allColumns.filter(
-            col =>
-              !meetColumns.includes(col.toLowerCase()) &&
-              !unwantedColumns.includes(col.toLowerCase())
-          );
-          setColumns(resultColumns);
-        }
       } catch (err: any) {
         setError(err.message);
         setFilteredResults([]);
@@ -184,7 +178,7 @@ const Results: React.FC = () => {
     };
 
     fetchResults();
-  }, [selectedMeet]);
+  }, [selectedEvent, events, selectedMeet]);
 
   // Update selected meet details when meet changes
   useEffect(() => {
@@ -200,28 +194,12 @@ const Results: React.FC = () => {
     }
   }, [selectedMeet, allMeetsData]);
 
-  // Group results by stylesid and gender
-  const groupedResults = React.useMemo(() => {
-    const groups: { [key: string]: ResultsTeamManager[] } = {};
 
-    filteredResults.forEach(result => {
-      const styleId = result.stylesid || 'unknown';
-      const gender = result.gender || 'unknown';
-      const groupKey = `${styleId}-${gender}`;
-
-      if (!groups[groupKey]) {
-        groups[groupKey] = [];
-      }
-      groups[groupKey].push(result);
-    });
-
-    return groups;
-  }, [filteredResults]);
 
   if (loading) {
     return (
       <div className="page-container">
-        <h2 className="page-title">Results Team Manager</h2>
+        <h2 className="page-title">Results</h2>
         <p>Loading results...</p>
       </div>
     );
@@ -230,7 +208,7 @@ const Results: React.FC = () => {
   if (error) {
     return (
       <div className="page-container">
-        <h2 className="page-title">Results Team Manager</h2>
+        <h2 className="page-title">Results</h2>
         <p className="error-message">Error: {error}</p>
       </div>
     );
@@ -238,7 +216,7 @@ const Results: React.FC = () => {
 
   return (
     <div className="page-container">
-      <h2 className="page-title">Results Team Manager</h2>
+      <h2 className="page-title">Results</h2>
 
       <div className="form-actions">
         <div className="form-group">
@@ -249,7 +227,10 @@ const Results: React.FC = () => {
             id="meet-filter"
             className="form-input"
             value={selectedMeet}
-            onChange={e => setSelectedMeet(e.target.value)}
+            onChange={e => {
+              setSelectedMeet(e.target.value);
+              setSelectedEvent('');
+            }}
           >
             <option value="">Select a meet...</option>
             {meets.map((meet, index) => (
@@ -259,6 +240,27 @@ const Results: React.FC = () => {
             ))}
           </select>
         </div>
+
+        {selectedMeet && events.length > 0 && (
+          <div className="form-group">
+            <label htmlFor="event-filter" className="form-label">
+              Event:
+            </label>
+            <select
+              id="event-filter"
+              className="form-input"
+              value={selectedEvent}
+              onChange={e => setSelectedEvent(e.target.value)}
+            >
+              <option value="">Select an event...</option>
+              {events.map((event) => (
+                <option key={event.ms_id} value={String(event.ms_id)}>
+                  {event.event_numb} - {event.distance}m {event.stroke_shortname} - {event.gender} - {event.ms_cat}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Meet Details as Table */}
@@ -344,78 +346,38 @@ const Results: React.FC = () => {
 
       {!selectedMeet ? (
         <div className="no-data">
-          <p>Please select a meet from the dropdown to view results.</p>
+          <p>Please select a meet from the dropdown to view events.</p>
+        </div>
+      ) : !selectedEvent ? (
+        <div className="no-data">
+          <p>Please select an event to view results.</p>
         </div>
       ) : filteredResults.length === 0 ? (
-        <div className="no-data">No results found.</div>
+        <div className="no-data">No results found for this event.</div>
       ) : (
         <>
-          <h3 className="modal-title">Results Dta</h3>
-          <div
-            className="table-container"
-          >
+          <h3 className="modal-title">
+            {events.find(e => String(e.ms_id) === selectedEvent)
+              ? `${events.find(e => String(e.ms_id) === selectedEvent)!.event_numb} - ${events.find(e => String(e.ms_id) === selectedEvent)!.distance}m ${events.find(e => String(e.ms_id) === selectedEvent)!.stroke_shortname} - ${events.find(e => String(e.ms_id) === selectedEvent)!.gender} - ${events.find(e => String(e.ms_id) === selectedEvent)!.ms_cat}`
+              : 'Results Data'}
+          </h3>
+          <div className="table-container">
             <table className="table" style={{ tableLayout: 'auto' }}>
               <thead>
                 <tr>
-                  {columns.map(column => (
-                    <th key={column}>
-                      {column.toLowerCase() === 'stroke shortname'
-                        ? 'Stroke'
-                        : column.charAt(0).toUpperCase() +
-                          column.slice(1).replace(/_/g, ' ')}
-                    </th>
-                  ))}
+                  <th>Rank</th>
+                  <th>Athlete</th>
+                  <th>Time</th>
                 </tr>
               </thead>
               <tbody>
-                {Object.entries(groupedResults).map(([groupKey, results]) => {
-                  // Get the first result to extract style information
-                  const firstResult = results[0];
-
-                  const distance = firstResult?.distance || '-';
-                  const stroke =
-                    firstResult?.['stroke shortname'] ||
-                    firstResult?.['Stroke shortname'] ||
-                    firstResult?.stroke ||
-                    firstResult?.strokeshortname ||
-                    firstResult?.stroke_shortname ||
-                    firstResult?.strokename ||
-                    firstResult?.style ||
-                    '-';
-                  const gender = firstResult?.gender || '-';
-
-                  return (
-                    <React.Fragment key={groupKey}>
-                      {/* Header row for each style and gender combination */}
-                      <tr
-                        style={{
-                          backgroundColor:
-                            gender === 'W' ? '#ffcccb' : '#c7def5ff',
-                          fontWeight: 'bold',
-                        }}
-                      >
-                        <td colSpan={columns.length}>
-                          <strong>
-                            {distance}m {stroke} - {gender}
-                          </strong>
-                        </td>
-                      </tr>
-                      {/* Data rows for this style and gender */}
-                      {results.map((result, index) => (
-                        <tr key={`${groupKey}-${index}`}>
-                          {columns.map(column => (
-                            <td key={column}>
-                              {result[column] !== null &&
-                              result[column] !== undefined
-                                ? String(result[column])
-                                : '-'}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </React.Fragment>
-                  );
-                })}
+                {filteredResults.map((result, index) => (
+                  <tr key={index}>
+                    <td style={{ fontWeight: 'bold' }}>{index + 1}</td>
+                    <td>{result.athletes?.name || '-'}</td>
+                    <td>{result.formatted_time || '-'}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -423,18 +385,22 @@ const Results: React.FC = () => {
       )}
 
       <div className="table-info">
-        {selectedMeet && (
+        {selectedEvent && (
           <>
             <p>Total records: {filteredResults.length}</p>
-            {selectedMeet !== 'All' && (
-              <p>
-                Showing results for:{' '}
-                <strong>
-                  {meets.find(meet => String(meet.id) === selectedMeet)?.name ||
-                    selectedMeet}
-                </strong>
-              </p>
-            )}
+            <p>
+              Showing results for:{' '}
+              <strong>
+                {meets.find(meet => String(meet.id) === selectedMeet)?.name ||
+                  selectedMeet}
+              </strong>
+              {' - '}
+              <strong>
+                {events.find(event => String(event.ms_id) === selectedEvent)?.event_numb
+                  ? `Event #${events.find(event => String(event.ms_id) === selectedEvent)?.event_numb}`
+                  : 'Selected Event'}
+              </strong>
+            </p>
           </>
         )}
       </div>

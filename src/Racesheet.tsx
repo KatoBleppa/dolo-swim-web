@@ -17,7 +17,8 @@ interface RaceResult {
   meetsid: number;
   distance: number;
   stroke_shortname: string;
-  personal_best: string | null;
+  pb_short_course: string | null;
+  pb_long_course: string | null;
   limit_str: string | null;
 }
 
@@ -140,7 +141,8 @@ const Racesheet: React.FC = () => {
                     <th>Athlete</th>
                     <th>Dist</th>
                     <th>Event</th>
-                    <th>PB</th>
+                    <th style={{ color: 'blue' }}>PB 25m</th>
+                    <th style={{ color: 'darkorange' }}>PB 50m</th>
                     <th>Limit</th>
                   </tr>
                 </thead>
@@ -151,7 +153,8 @@ const Racesheet: React.FC = () => {
                       <td className="athlete">{result.athlete_name}</td>
                       <td>{result.distance}</td>
                       <td>{result.stroke_shortname}</td>
-                      <td>{result.personal_best || '-'}</td>
+                      <td style={{ color: 'blue' }}>{result.pb_short_course || '-'}</td>
+                      <td style={{ color: 'darkorange' }}>{result.pb_long_course || '-'}</td>
                       <td>{result.limit_str || '-'}</td>
                     </tr>
                   ))}

@@ -34,6 +34,7 @@ const Navbar: React.FC = () => {
         { path: '/racesheet', label: 'Race Sheet' },
       ],
     },
+    { path: '/tools', label: 'Tools' },
   ];
 
   const toggleMenu = () => {

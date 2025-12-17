@@ -12,13 +12,7 @@ import Results from './Results';
 import ResultsWithPermillili from './ResultsWithPermillili';
 import BestPermillili from './BestPermillili';
 import Racesheet from './Racesheet';
-
-const Tools = () => (
-  <div style={{ padding: '2rem' }}>
-    <h2>Tools</h2>
-    <p>Tools page coming soon.</p>
-  </div>
-);
+import Tools from './Tools';
 
 function AppRouter() {
   return (

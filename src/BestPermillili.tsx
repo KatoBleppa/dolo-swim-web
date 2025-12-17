@@ -258,18 +258,18 @@ const BestPermillili: React.FC = () => {
         <>
           <h3 className="modal-title">Best Permillili Rankings</h3>
           <div className="table-container">
-            <table className="table" style={{ tableLayout: 'auto' }}>
+            <table className="table" style={{ tableLayout: 'auto', width: '100%' }}>
               <thead>
                 <tr>
-                  <th>Rank</th>
+                  <th style={{ width: '40px' }}>#</th>
                   <th>Athlete</th>
-                  <th>Distance</th>
-                  <th>Event</th>
-                  <th>Date</th>
+                  <th style={{ width: '50px' }}>Dist</th>
+                  <th style={{ width: '60px' }}>Str</th>
+                  <th style={{ width: '90px' }}>Date</th>
                   <th>Meet</th>
-                  <th>Result</th>
-                  <th>Limit</th>
-                  <th>Permillili</th>
+                  <th style={{ width: '70px' }}>Result</th>
+                  <th style={{ width: '70px' }}>Limit</th>
+                  <th style={{ width: '100px' }}>Points</th>
                 </tr>
               </thead>
               <tbody>
@@ -291,7 +291,7 @@ const BestPermillili: React.FC = () => {
                               : '#f0f5ff',
                       }}
                     >
-                      <td style={{ fontWeight: 'bold' }}>{index + 1}</td>
+                      <td style={{ fontWeight: 'bold', textAlign: 'center' }}>{index + 1}</td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <div
@@ -322,16 +322,25 @@ const BestPermillili: React.FC = () => {
                               <span style={{ fontSize: '20px', color: '#999' }}>👤</span>
                             )}
                           </div>
-                          <strong>{result.name || '-'}</strong>
+                          <strong style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {result.name || '-'}
+                          </strong>
                         </div>
                       </td>
-                      <td>{result.limit_dist || '-'}</td>
-                      <td>{result.limit_descr_short || '-'}</td>
-                      <td>{result.mindate || '-'}</td>
-                      <td>{result.meetname || '-'}</td>
-                      <td>{result.result_string || '-'}</td>
-                      <td>{result.limit_string || '-'}</td>
-                      <td style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
+                      <td style={{ textAlign: 'center' }}>{result.limit_dist || '-'}</td>
+                      <td style={{ textAlign: 'center' }}>{result.limit_descr_short || '-'}</td>
+                      <td style={{ textAlign: 'center' }}>{result.mindate || '-'}</td>
+                      <td style={{ 
+                        maxWidth: '150px', 
+                        overflow: 'hidden', 
+                        textOverflow: 'ellipsis', 
+                        whiteSpace: 'nowrap' 
+                      }}>
+                        {result.meetname || '-'}
+                      </td>
+                      <td style={{ textAlign: 'center' }}>{result.result_string || '-'}</td>
+                      <td style={{ textAlign: 'center' }}>{result.limit_string || '-'}</td>
+                      <td style={{ fontWeight: 'bold', fontSize: '1.1rem', textAlign: 'center' }}>
                         {result.permillili || '-'}
                       </td>
                     </tr>

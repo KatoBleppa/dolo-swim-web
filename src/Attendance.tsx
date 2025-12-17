@@ -212,12 +212,12 @@ const AttendanceList: React.FC = () => {
             <table className="table" style={{ tableLayout: 'auto' }}>
               <thead className="table-header">
                 <tr>
-                  <th style={{ width: '60px' }}>Portrait</th>
+                  <th>Portrait</th>
                   <th>Name</th>
-                  <th style={{ width: '60px' }}>P</th>
-                  <th style={{ width: '60px' }}>J</th>
-                  <th style={{ width: '60px' }}>T</th>
-                  <th style={{ width: '80px' }}>%</th>
+                  <th>P</th>
+                  <th>J</th>
+                  <th>T</th>
+                  <th>%</th>
                 </tr>
               </thead>
               <tbody>
