@@ -27,6 +27,7 @@ const Navbar: React.FC = () => {
     {
       category: 'Meets',
       items: [
+        { path: '/meetmanager', label: 'Meet Manager' },
         { path: '/results', label: 'Results' },
         { path: '/permillili', label: 'Results with permillili' },
         { path: '/bestpermillili', label: 'Best Permillili' },

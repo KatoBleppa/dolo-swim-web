@@ -13,6 +13,7 @@ import ResultsWithPermillili from './ResultsWithPermillili';
 import BestPermillili from './BestPermillili';
 import Racesheet from './Racesheet';
 import Tools from './Tools';
+import MeetManager from './MeetManager';
 
 function AppRouter() {
   return (
@@ -32,6 +33,7 @@ function AppRouter() {
       <Route path="/bestpermillili" element={<BestPermillili />} />
       <Route path="/racesheet" element={<Racesheet />} />
       <Route path="/trend" element={<Trend />} />
+      <Route path="/meetmanager" element={<MeetManager />} />
     </Routes>
   );
 }
